@@ -14,12 +14,16 @@ const app = express();
 
 app.set('trust proxy', 1);
 app.use(helmet());
+const origins=[process.env.CLIENT_ORIGIN, 
+  'http://localhost:5174',
+  'http://192.168.113.206:4000'].filter(Boolean);
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5174',
+    origin: origins,
     credentials: true,
   })
 );
+app.use('/api/giving/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
@@ -28,6 +32,40 @@ app.use(session(sessionConfig(sessionStore)));
 app.use(rateLimiter);
 
 app.use('/api', routes);
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>HPN Backend</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+          }
+          .card {
+            background: #1e293b;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>✅ HPN Mobile Backend</h1>
+          <p>Backend is running successfully.</p>
+          <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
 
 app.use(notFound);
 app.use(errorHandler);

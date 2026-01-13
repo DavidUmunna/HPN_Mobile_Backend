@@ -14,3 +14,9 @@ const attendanceSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Attendance', attendanceSchema);
+attendanceSchema.pre("save", function (next) {
+  const date = this.createdAt || new Date();
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  this.day = days[date.getDay()];
+  next();
+});

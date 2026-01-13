@@ -13,9 +13,14 @@ async function start() {
     await connectMongo();
     await connectRedis();
     const app = require('./app'); // defer app creation until redis is ready
-    app.listen(PORT, () => logger.info(`API listening on port ${PORT}`));
+
+    
+   
+
+    app.listen(PORT,"0.0.0.0" ,() => logger.info(`API listening on port ${PORT}`));
   } catch (err) {
     logger.error('Failed to start server', { error: err });
+    console.log("error from server",err)
     process.exit(1);
   }
 }

@@ -17,4 +17,19 @@ async function listAll() {
   return User.find({}).lean();
 }
 
-module.exports = { createUser, findByEmail, findById, listAll };
+async function updateStripeCustomerId(userId, stripeCustomerId) {
+  return User.findByIdAndUpdate(userId, { stripeCustomerId }, { new: true });
+}
+
+async function findByIds(ids) {
+  return User.find({ _id: { $in: ids } }).select('name').lean();
+}
+
+module.exports = {
+  createUser,
+  findByEmail,
+  findById,
+  listAll,
+  updateStripeCustomerId,
+  findByIds,
+};

@@ -2,7 +2,7 @@
 require('dotenv').config({ path: require('path').join(process.cwd(), 'backend', '.env') });
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const User = require('../src/models/User');
+const User = require('../models/User');
 
 const email = process.env.SEED_USER_EMAIL || 'admin@example.com';
 const password = process.env.SEED_USER_PASSWORD || 'changeme123';
@@ -11,7 +11,7 @@ const role = process.env.SEED_USER_ROLE || 'admin';
 const phone = process.env.SEED_USER_PHONE || '';
 
 async function main() {
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/hpn_mobile';
   if (!uri) {
     console.error('MONGODB_URI is required');
     process.exit(1);
