@@ -13,12 +13,35 @@ async function findById(id) {
   return User.findById(id);
 }
 
+async function findByResetTokenHash(tokenHash) {
+  return User.findOne({
+    resetPasswordTokenHash: tokenHash,
+    resetPasswordExpiresAt: { $gt: new Date() },
+  });
+}
+
 async function listAll() {
   return User.find({}).lean();
 }
 
 async function updateStripeCustomerId(userId, stripeCustomerId) {
   return User.findByIdAndUpdate(userId, { stripeCustomerId }, { new: true });
+}
+
+async function setResetToken(userId, { tokenHash, expiresAt }) {
+  return User.findByIdAndUpdate(
+    userId,
+    { resetPasswordTokenHash: tokenHash, resetPasswordExpiresAt: expiresAt },
+    { new: true }
+  );
+}
+
+async function updatePassword(userId, passwordHash) {
+  return User.findByIdAndUpdate(
+    userId,
+    { passwordHash, resetPasswordTokenHash: null, resetPasswordExpiresAt: null },
+    { new: true }
+  );
 }
 
 async function findByIds(ids) {
@@ -29,7 +52,10 @@ module.exports = {
   createUser,
   findByEmail,
   findById,
+  findByResetTokenHash,
   listAll,
   updateStripeCustomerId,
+  setResetToken,
+  updatePassword,
   findByIds,
 };

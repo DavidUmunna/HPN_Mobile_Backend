@@ -16,6 +16,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 const origins=[process.env.CLIENT_ORIGIN, 
   'http://localhost:5174',
+  "https://hpn-admin-production.up.railway.app",
   'http://192.168.113.206:4000'].filter(Boolean);
 app.use(
   cors({

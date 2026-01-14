@@ -21,4 +21,21 @@ const loginSchema = Joi.object({
   query: Joi.object().unknown(true),
 });
 
-module.exports = { signupSchema, loginSchema };
+const forgotPasswordSchema = Joi.object({
+  body: Joi.object({
+    email: Joi.string().email().required(),
+  }).required(),
+  params: Joi.object().unknown(true),
+  query: Joi.object().unknown(true),
+});
+
+const resetPasswordSchema = Joi.object({
+  body: Joi.object({
+    token: Joi.string().required(),
+    password: Joi.string().min(8).required(),
+  }).required(),
+  params: Joi.object().unknown(true),
+  query: Joi.object().unknown(true),
+});
+
+module.exports = { signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema };
