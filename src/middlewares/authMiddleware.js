@@ -9,6 +9,7 @@ function requireAuth(req, _res, next) {
 async function requireAdmin(req, _res, next) {
   if (!req.session || !req.session.userId) return next(new AppError('Unauthorized', 401));
   const user = await findById(req.session.userId);
+  console.log('Admin check for user:', user);
   if (!user || user.role !== 'admin') return next(new AppError('Forbidden', 403));
   req.user = user;
   return next();
