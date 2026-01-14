@@ -30,7 +30,12 @@ async function loginController(req, res, next) {
 async function adminLoginController(req, res, next) {
   try {
     const user = await adminLogin({ ...req.body, session: req.session });
-    res.json({ user });
+    req.session.userId = user.id;
+    req.session.role = user.role;
+    req.session.save((err) => {
+      if (err) return next(err);
+      res.json({ user });
+    });
   } catch (err) {
     next(err);
   }
