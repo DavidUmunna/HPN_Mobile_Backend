@@ -28,6 +28,6 @@ router.post('/logout', requireAuth, logoutController);
 router.get('/me', requireAuth, meController);
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPasswordController);
 router.get('/reset-password', resetPasswordPageController);
-router.post('/reset-password', validate(resetPasswordSchema), resetPasswordController);
+router.post('/reset-password', loginLimiter,validate(resetPasswordSchema), resetPasswordController);
 
 module.exports = router;
