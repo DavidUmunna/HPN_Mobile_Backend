@@ -1,5 +1,5 @@
 const session = require('express-session');
-const RedisStore = require('connect-redis').default;
+const { RedisStore } = require('connect-redis');
 const { getRedisClient } = require('./redis');
 
 function sessionConfig(store) {
@@ -14,8 +14,8 @@ function sessionConfig(store) {
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: ttlSeconds * 1000,
     },
   };

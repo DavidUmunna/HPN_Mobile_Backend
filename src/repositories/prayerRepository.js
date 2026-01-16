@@ -19,4 +19,14 @@ async function updatePrayer(id, update) {
   return PrayerRequest.findByIdAndUpdate(id, update, { new: true }).lean();
 }
 
-module.exports = { listPrayers, createPrayer, findPrayerById, updatePrayer };
+async function incrementPrayerComments(id, delta) {
+  return PrayerRequest.findByIdAndUpdate(id, { $inc: { commentsCount: delta } }, { new: true }).lean();
+}
+
+module.exports = {
+  listPrayers,
+  createPrayer,
+  findPrayerById,
+  updatePrayer,
+  incrementPrayerComments,
+};

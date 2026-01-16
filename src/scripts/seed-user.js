@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { loadEnv } = require('../src/config/env');
-const { connectMongo } = require('../src/config/database');
-const User = require('../src/models/User');
+const User = require('../models/User');
 
 loadEnv();
 
@@ -15,8 +13,10 @@ const phone = process.env.SEED_USER_PHONE || '';
 const overwrite = process.env.SEED_USER_OVERWRITE === 'true';
 
 async function main() {
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI is required to seed an admin user');
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/hpn_mobile';
+  if (!uri) {
+    console.error('MONGODB_URI is required');
+    process.exit(1);
   }
 
   await connectMongo();

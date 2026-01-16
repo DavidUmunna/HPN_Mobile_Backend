@@ -1,4 +1,11 @@
-const { createAttendance, findLatestForUser, countAll, recent } = require('../repositories/attendanceRepository');
+const {
+  createAttendance,
+  findLatestForUser,
+  findForUser,
+  findByIdForUser,
+  countAll,
+  recent,
+} = require('../repositories/attendanceRepository');
 const { AppError } = require('../utils/errors');
 
 function toAttendanceResponse(record) {
@@ -34,6 +41,17 @@ async function latestForUser(userId) {
   return toAttendanceResponse(record);
 }
 
+async function listForUser(userId) {
+  const records = await findForUser(userId);
+  return records.map(toAttendanceResponse);
+}
+
+async function getAttendance({ attendanceId, userId }) {
+  const record = await findByIdForUser(attendanceId, userId);
+  if (!record) throw new AppError('Attendance not found', 404);
+  return toAttendanceResponse(record);
+}
+
 async function summary() {
   const totalCheckIns = await countAll();
   const recentRecords = await recent();
@@ -43,4 +61,4 @@ async function summary() {
   };
 }
 
-module.exports = { checkIn, latestForUser, summary };
+module.exports = { checkIn, latestForUser, listForUser, getAttendance, summary };

@@ -1,7 +1,14 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { createUser, findByEmail, findById } = require('../repositories/userRepository');
-const { createToken, findValidToken, markTokenUsed, deleteTokensForUser } = require('../repositories/passwordResetTokenRepository');
+const {
+  createUser,
+  findByEmail,
+  findById,
+  findByResetTokenHash,
+  setResetToken,
+  updatePassword,
+} = require('../repositories/userRepository');
+const { sendMail } = require('../utils/mailer');
 const { AppError } = require('../utils/errors');
 const { logger } = require('../utils/logger');
 const { signAuthToken } = require('../utils/jwt');
@@ -37,6 +44,16 @@ async function login({ email, password, session }) {
   return { user: toSafeUser(user), token: signAuthToken(user) };
 }
 
+async function adminLogin({ email, password, session }) {
+  const user = await findByEmail(email);
+  if (!user) throw new AppError('Invalid credentials', 401);
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) throw new AppError('Invalid credentials', 401);
+  if (user.role !== 'admin') throw new AppError('Forbidden', 403);
+  session.userId = user._id.toString();
+  return toSafeUser(user);
+}
+
 async function logout(session) {
   return new Promise((resolve, reject) => {
     session.destroy((err) => {
@@ -52,66 +69,51 @@ async function getProfile(userId) {
   return toSafeUser(user);
 }
 
-async function changePassword({ userId, currentPassword, newPassword }) {
-  const user = await findById(userId);
-  if (!user) throw new AppError('User not found', 404);
-  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!valid) throw new AppError('Invalid current password', 400);
-  user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await user.save();
-  return toSafeUser(user);
-}
-
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex');
-}
-
-async function forgotPassword(email) {
+async function requestPasswordReset({ email, baseUrl }) {
   const user = await findByEmail(email);
-  if (!user) {
-    logger.info('Password reset requested for unknown email', { email });
-    return { sent: true };
+  if (!user) return;
+
+  if (!baseUrl) {
+    throw new AppError('Reset base URL not configured', 500);
   }
 
-  await deleteTokensForUser(user._id);
-
-  const token = crypto.randomBytes(32).toString('hex');
-  const tokenHash = hashToken(token);
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
   const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
 
-  await createToken({ userId: user._id, tokenHash, expiresAt });
+  await setResetToken(user._id, { tokenHash, expiresAt });
 
-  const baseUrl = (process.env.APP_URL || process.env.CLIENT_ORIGIN || 'http://localhost:4000').replace(/\/$/, '');
-  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
-  logger.info('Password reset link generated', { email: user.email, resetUrl, expiresAt });
+  const trimmedBaseUrl = baseUrl.replace(/\/$/, '');
+  const resetLink = `${trimmedBaseUrl}/api/auth/reset-password?token=${rawToken}`;
 
-  return { sent: true };
+  const subject = 'Reset your HPN password';
+  const text = `You requested a password reset. Open this link to set a new password: ${resetLink}`;
+  const html = `
+    <p>You requested a password reset.</p>
+    <p><a href="${resetLink}">Click here to set a new password</a></p>
+    <p>If you did not request this, you can ignore this email.</p>
+  `;
+
+  await sendMail({ to: user.email, subject, text, html });
 }
 
-async function resetPassword({ token, newPassword }) {
-  const tokenHash = hashToken(token);
-  const resetToken = await findValidToken(tokenHash);
-  if (!resetToken) throw new AppError('Invalid or expired reset token', 400);
+async function resetPasswordWithToken({ token, password }) {
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const user = await findByResetTokenHash(tokenHash);
+  if (!user) throw new AppError('Reset token invalid or expired', 400);
 
-  const user = await findById(resetToken.user);
-  if (!user) throw new AppError('User not found', 404);
-
-  user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await user.save();
-
-  await markTokenUsed(resetToken._id);
-  await deleteTokensForUser(user._id);
-
-  return toSafeUser(user);
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const updated = await updatePassword(user._id, passwordHash);
+  return toSafeUser(updated);
 }
 
 module.exports = {
   signup,
   login,
+  adminLogin,
   logout,
   getProfile,
-  changePassword,
-  forgotPassword,
-  resetPassword,
+  requestPasswordReset,
+  resetPasswordWithToken,
   toSafeUser,
 };

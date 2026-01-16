@@ -7,10 +7,13 @@ const userSchema = new mongoose.Schema(
     name: { type: String, trim: true },
     phone: { type: String, trim: true },
     role: { type: String, enum: ['member', 'staff', 'admin'], default: 'member' },
+    stripeCustomerId: { type: String, trim: true },
+    resetPasswordTokenHash: { type: String, trim: true },
+    resetPasswordExpiresAt: { type: Date },
   },
   { timestamps: true }
 );
 
-userSchema.index({ email: 1 }, { unique: true });
+//userSchema.index({ email: 1 });
 
 module.exports = mongoose.model('User', userSchema);
