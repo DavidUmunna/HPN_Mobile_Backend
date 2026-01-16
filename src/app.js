@@ -13,7 +13,6 @@ const { errorHandler } = require('./middlewares/errorHandler');
 const app = express();
 app.set('trust proxy', 1);
 
-app.set('trust proxy', 1);
 app.use(helmet());
 const origins=[process.env.CLIENT_ORIGIN, 
   'http://localhost:5174',
