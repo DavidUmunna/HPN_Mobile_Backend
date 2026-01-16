@@ -7,6 +7,7 @@ const prayerRoutes = require('./prayerRoutes');
 const notificationRoutes = require('./notificationRoutes');
 const attendanceRoutes = require('./attendanceRoutes');
 const adminRoutes = require('./adminRoutes');
+const givingRoutes = require('./givingRoutes');
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use('/prayers', prayerRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/admin', adminRoutes);
+router.use('/giving', givingRoutes);
 
 module.exports = router;
