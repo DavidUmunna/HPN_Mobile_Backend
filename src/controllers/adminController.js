@@ -6,6 +6,7 @@ async function listUsersController(_req, res, next) {
     res.json({ users });
   } catch (err) {
     next(err);
+    console.log("attendance summary error",err)
   }
 }
 
@@ -15,6 +16,7 @@ async function attendanceSummaryController(_req, res, next) {
     res.json(summary);
   } catch (err) {
     next(err);
+    console.log("attendance summary error",err)
   }
 }
 
@@ -24,6 +26,7 @@ async function eventsSummaryController(_req, res, next) {
     res.json(summary);
   } catch (err) {
     next(err);
+    console.log("event  summary error",err)
   }
 }
 
@@ -33,6 +36,7 @@ async function updateUserEmailController(req, res, next) {
     res.json({ user });
   } catch (err) {
     next(err);
+    console.log("user Email error",err)
   }
 }
 
