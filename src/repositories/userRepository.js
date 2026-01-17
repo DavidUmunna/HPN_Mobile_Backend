@@ -10,7 +10,8 @@ async function findByEmail(email) {
 }
 
 async function findById(id) {
-  return User.findById(id);
+  const user=await User.findById(id);
+  return user
 }
 
 async function findByResetTokenHash(tokenHash) {
