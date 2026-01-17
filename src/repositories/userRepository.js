@@ -10,7 +10,7 @@ async function findByEmail(email) {
 }
 
 async function findById(id) {
-  const user=await User.findById(id);
+  const user=await User.find({_id:id});
   return user
 }
 
