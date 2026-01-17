@@ -30,7 +30,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-app.use(session(sessionConfig(sessionStore)));
+  app.use(session(sessionConfig(sessionStore)));
 app.use(rateLimiter);
 
 app.use('/api', routes);

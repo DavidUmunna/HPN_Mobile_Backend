@@ -1,3 +1,4 @@
+const { Console } = require('winston/lib/winston/transports');
 const {
   signup,
   login,
@@ -38,6 +39,7 @@ async function adminLoginController(req, res, next) {
     });
   } catch (err) {
     next(err);
+    Console.log("an error occured in session",err)
   }
 }
 
@@ -48,6 +50,7 @@ async function logoutController(req, res, next) {
     res.status(204).send();
   } catch (err) {
     next(err);
+    Console.log("an error occured here",err)
   }
 }
 
