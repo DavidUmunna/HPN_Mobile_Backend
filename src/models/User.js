@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, trim: true },
     phone: { type: String, trim: true },
     role: { type: String, enum: ['member', 'staff', 'admin'], default: 'member' },
+    dependents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Dependent' }],
     stripeCustomerId: { type: String, trim: true },
     resetPasswordTokenHash: { type: String, trim: true },
     resetPasswordExpiresAt: { type: Date },

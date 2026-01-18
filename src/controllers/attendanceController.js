@@ -7,6 +7,7 @@ async function checkInController(req, res, next) {
       latitude: req.body.latitude,
       longitude: req.body.longitude,
       timestamp: req.body.timestamp,
+      dependents: req.body.dependents,
     });
     res.status(201).json({ record });
   } catch (err) {
