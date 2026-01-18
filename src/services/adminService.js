@@ -4,7 +4,7 @@ const Attendance = require('../models/Attendance');
 const { AppError } = require('../utils/errors');
 
 async function listUsers() {
-  const users = await User.find({}, 'email name role createdAt').sort({ createdAt: -1 }).lean();
+  const users = await User.find().sort({ createdAt: -1 }).lean();
   return users.map((u) => ({
     id: u._id.toString(),
     email: u.email,
@@ -16,7 +16,7 @@ async function listUsers() {
 
 async function attendanceSummary() {
   const total = await Attendance.countDocuments();
-  const latest = await Attendance.find({}).sort({ timestamp: -1 }).limit(5).lean();
+  const latest = await Attendance.find().sort({ timestamp: -1 }).limit(5).lean();
   return {
     totalCheckIns: total,
     recent: latest.map((r) => ({
@@ -29,24 +29,30 @@ async function attendanceSummary() {
 }
 
 async function eventsSummary() {
-  const events = await Event.find({}).lean();
+  const events = await Event.find().lean();
   const totalEvents = events.length;
   const totalRegistrations = events.reduce((sum, evt) => sum + (evt.attendees?.length || 0), 0);
   return { totalEvents, totalRegistrations };
 }
 
 async function updateUserEmail({ userId, newEmail }) {
-  const email = newEmail.trim().toLowerCase();
-  const user = await User.findById(userId);
-  if (!user) throw new AppError('User not found', 404);
+  try {
+    const email = newEmail.trim().toLowerCase();
+    const user = await User.findById(userId);
+    if (!user) throw new AppError('User not found', 404);
 
-  const existing = await User.findOne({ email });
-  if (existing && existing._id.toString() !== userId) throw new AppError('Email already in use', 409);
+    const existing = await User.findOne({ email });
+    if (existing && existing._id.toString() !== userId) throw new AppError('Email already in use', 409);
 
-  user.email = email;
-  await user.save();
+    user.email = email;
+    await user.save();
 
-  return { id: user._id.toString(), email: user.email, name: user.name, role: user.role };
+    return { id: user._id.toString(), email: user.email, name: user.name, role: user.role };
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid user id', 400);
+    if (err?.code === 11000) throw new AppError('Email already in use', 409);
+    throw err;
+  }
 }
 
 module.exports = { listUsers, attendanceSummary, eventsSummary, updateUserEmail };
