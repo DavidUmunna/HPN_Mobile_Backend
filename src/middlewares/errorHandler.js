@@ -7,7 +7,6 @@ function errorHandler(err, req, res, _next) {
 
   logger.error('Request error', { status, error: err, path: req.path });
 
-  if (status >= 500) payload.message = 'Something went wrong';
   res.status(status).json(payload);
 }
 
