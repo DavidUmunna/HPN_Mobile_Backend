@@ -25,6 +25,7 @@ function buildMessages(tokens, { title, body, data }) {
     title,
     body,
     data: payloadData,
+    ttl: 60 * 60 * 12,
   }));
 }
 
