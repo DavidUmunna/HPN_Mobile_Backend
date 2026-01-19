@@ -10,4 +10,21 @@ const seedNotificationSchema = Joi.object({
   query: Joi.object().unknown(true),
 });
 
-module.exports = { seedNotificationSchema };
+const registerPushTokenSchema = Joi.object({
+  body: Joi.object({
+    token: Joi.string().required(),
+    platform: Joi.string().valid('ios', 'android', 'web').required(),
+  }).required(),
+  params: Joi.object().unknown(true),
+  query: Joi.object().unknown(true),
+});
+
+const unregisterPushTokenSchema = Joi.object({
+  body: Joi.object({
+    token: Joi.string().required(),
+  }).required(),
+  params: Joi.object().unknown(true),
+  query: Joi.object().unknown(true),
+});
+
+module.exports = { seedNotificationSchema, registerPushTokenSchema, unregisterPushTokenSchema };

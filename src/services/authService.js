@@ -23,6 +23,7 @@ function toSafeUser(user) {
     name: user.name,
     phone: user.phone,
     role: user.role,
+    isOnboarded: user.isOnboarded,
   };
 }
 

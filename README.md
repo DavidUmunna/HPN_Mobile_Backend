@@ -59,6 +59,11 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 - JWT (native/mobile): login/signup responses include `{ user, token }`. Send `Authorization: Bearer <token>` on future requests. Middleware accepts either session or bearer.
 - Config: `JWT_SECRET` (default `dev-secret-change-me`), `JWT_EXPIRES_IN` (default `7d`).
 
+## Push notifications (FCM)
+- Register device token: `POST /notifications/push-tokens` body `{ token, platform }` where platform is `ios`, `android`, or `web`.
+- Unregister device token: `DELETE /notifications/push-tokens` body `{ token }`.
+- Config: set one of `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_SERVICE_ACCOUNT_BASE64`, or `FIREBASE_SERVICE_ACCOUNT_PATH`.
+
 ## Giving flow (Stripe, Apple Pay / Google Pay via Payment Sheet)
 - `GET /giving`: returns `{ transactions, totalGiven, thisMonth }` for the signed-in user.
 - `POST /giving`: body `{ amount, category, type, currency? }` -> creates a Stripe PaymentIntent with automatic payment methods enabled so Apple Pay / Google Pay work via Payment Sheet. Response includes the donation record plus `paymentIntentClientSecret` and `paymentProvider`.

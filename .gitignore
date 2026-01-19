@@ -1,6 +1,7 @@
 node_modules/
 package-lock.json
 .env
+*firebase-adminsdk*.json
 .DS_Store
 dist
 coverage

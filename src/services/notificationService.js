@@ -7,6 +7,8 @@ const {
   createNotification,
 } = require('../repositories/notificationRepository');
 const { AppError } = require('../utils/errors');
+const { sendPushToUser } = require('./pushNotificationService');
+const { logger } = require('../utils/logger');
 
 function toNotificationResponse(notification) {
   return {
@@ -46,6 +48,15 @@ async function clearAll(userId) {
 
 async function seedNotification(userId, payload) {
   const created = await createNotification({ userId, ...payload });
+  try {
+    await sendPushToUser(userId, {
+      title: created.title,
+      body: created.body,
+      data: { notificationId: created._id.toString(), type: created.type },
+    });
+  } catch (err) {
+    logger.error('Push send failed for notification', { err: err.message });
+  }
   return toNotificationResponse(created);
 }
 

@@ -6,6 +6,7 @@ const {
   clearAll,
   seedNotification,
 } = require('../services/notificationService');
+const { registerPushToken, unregisterPushToken } = require('../services/pushTokenService');
 
 async function listNotificationsController(req, res, next) {
   try {
@@ -61,6 +62,24 @@ async function seedNotificationController(req, res, next) {
   }
 }
 
+async function registerPushTokenController(req, res, next) {
+  try {
+    const pushToken = await registerPushToken(req.session.userId, req.body);
+    res.status(201).json({ pushToken });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function unregisterPushTokenController(req, res, next) {
+  try {
+    const pushToken = await unregisterPushToken(req.session.userId, req.body.token);
+    res.json({ pushToken });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listNotificationsController,
   markReadController,
@@ -68,4 +87,6 @@ module.exports = {
   deleteNotificationController,
   clearNotificationsController,
   seedNotificationController,
+  registerPushTokenController,
+  unregisterPushTokenController,
 };
