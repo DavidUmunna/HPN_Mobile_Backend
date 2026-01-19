@@ -1,3 +1,4 @@
+const { Expo } = require('expo-server-sdk');
 const { upsertToken, disableToken } = require('../repositories/pushTokenRepository');
 const { AppError } = require('../utils/errors');
 
@@ -12,6 +13,9 @@ function toPushTokenResponse(token) {
 }
 
 async function registerPushToken(userId, payload) {
+  if (!Expo.isExpoPushToken(payload.token)) {
+    throw new AppError('Invalid Expo push token', 400);
+  }
   const token = await upsertToken({ userId, token: payload.token, platform: payload.platform });
   return toPushTokenResponse(token);
 }

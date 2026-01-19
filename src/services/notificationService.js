@@ -5,10 +5,14 @@ const {
   deleteNotification,
   clearNotifications,
   createNotification,
+  createNotifications,
 } = require('../repositories/notificationRepository');
 const { AppError } = require('../utils/errors');
-const { sendPushToUser } = require('./pushNotificationService');
+const { sendPushToUser, sendPushToUsers } = require('./pushNotificationService');
+const { listUserIds } = require('../repositories/userRepository');
 const { logger } = require('../utils/logger');
+
+const BROADCAST_BATCH_SIZE = 500;
 
 function toNotificationResponse(notification) {
   return {
@@ -60,6 +64,48 @@ async function seedNotification(userId, payload) {
   return toNotificationResponse(created);
 }
 
+async function broadcastNotification(userId, payload) {
+  const users = await listUserIds();
+  const userIds = users.map((user) => user._id.toString());
+  const created = await createNotification({ userId, ...payload });
+  const basePayload = {
+    title: created.title,
+    body: created.body,
+    type: created.type,
+  };
+
+  const otherUserIds = userIds.filter((id) => id !== created.userId.toString());
+  for (let i = 0; i < otherUserIds.length; i += BROADCAST_BATCH_SIZE) {
+    const batch = otherUserIds.slice(i, i + BROADCAST_BATCH_SIZE);
+    await createNotifications(
+      batch.map((id) => ({
+        userId: id,
+        ...basePayload,
+      }))
+    );
+  }
+
+  let pushResult = { delivered: 0, failed: 0 };
+  try {
+    pushResult = await sendPushToUsers(userIds, {
+      title: basePayload.title,
+      body: basePayload.body,
+      data: { type: basePayload.type, broadcast: 'true' },
+    });
+  } catch (err) {
+    logger.error('Push send failed for broadcast', { err: err.message });
+  }
+
+  return {
+    notification: toNotificationResponse(created),
+    summary: {
+      recipients: userIds.length,
+      delivered: pushResult.delivered,
+      failed: pushResult.failed,
+    },
+  };
+}
+
 module.exports = {
   getNotifications,
   markNotificationAsRead,
@@ -67,4 +113,5 @@ module.exports = {
   deleteOne,
   clearAll,
   seedNotification,
+  broadcastNotification,
 };

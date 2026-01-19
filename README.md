@@ -59,10 +59,11 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 - JWT (native/mobile): login/signup responses include `{ user, token }`. Send `Authorization: Bearer <token>` on future requests. Middleware accepts either session or bearer.
 - Config: `JWT_SECRET` (default `dev-secret-change-me`), `JWT_EXPIRES_IN` (default `7d`).
 
-## Push notifications (FCM)
-- Register device token: `POST /notifications/push-tokens` body `{ token, platform }` where platform is `ios`, `android`, or `web`.
+## Push notifications (Expo)
+- Register device token: `POST /notifications/push-tokens` body `{ token, platform }` where `token` is an Expo push token.
 - Unregister device token: `DELETE /notifications/push-tokens` body `{ token }`.
-- Config: set one of `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_SERVICE_ACCOUNT_BASE64`, or `FIREBASE_SERVICE_ACCOUNT_PATH`.
+- Admin broadcast: `POST /notifications` as an admin user sends to all users by default; send `{ audience: 'self' }` to target only yourself.
+- Config: optional `EXPO_ACCESS_TOKEN` for higher throughput.
 
 ## Giving flow (Stripe, Apple Pay / Google Pay via Payment Sheet)
 - `GET /giving`: returns `{ transactions, totalGiven, thisMonth }` for the signed-in user.

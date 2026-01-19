@@ -25,6 +25,10 @@ async function listAll() {
   return User.find({}).lean();
 }
 
+async function listUserIds() {
+  return User.find({}).select('_id').lean();
+}
+
 async function updateStripeCustomerId(userId, stripeCustomerId) {
   return User.findByIdAndUpdate(userId, { stripeCustomerId }, { new: true });
 }
@@ -55,6 +59,7 @@ module.exports = {
   findById,
   findByResetTokenHash,
   listAll,
+  listUserIds,
   updateStripeCustomerId,
   setResetToken,
   updatePassword,

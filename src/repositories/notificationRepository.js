@@ -9,6 +9,11 @@ async function createNotification(payload) {
   return notification.save();
 }
 
+async function createNotifications(payloads) {
+  if (!payloads.length) return [];
+  return Notification.insertMany(payloads, { ordered: false });
+}
+
 async function markRead(id, userId) {
   return Notification.findOneAndUpdate({ _id: id, userId }, { read: true }, { new: true }).lean();
 }
@@ -31,6 +36,7 @@ async function clearNotifications(userId) {
 module.exports = {
   listNotifications,
   createNotification,
+  createNotifications,
   markRead,
   markAllRead,
   deleteNotification,

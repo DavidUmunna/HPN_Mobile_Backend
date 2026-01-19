@@ -5,6 +5,7 @@ const seedNotificationSchema = Joi.object({
     title: Joi.string().required(),
     body: Joi.string().required(),
     type: Joi.string().valid('event', 'prayer', 'giving', 'general').default('general'),
+    audience: Joi.string().valid('self', 'all').optional(),
   }).required(),
   params: Joi.object().unknown(true),
   query: Joi.object().unknown(true),

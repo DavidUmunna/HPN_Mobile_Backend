@@ -12,6 +12,11 @@ async function listTokensForUser(userId) {
   return PushToken.find({ userId, enabled: true }).lean();
 }
 
+async function listTokensForUsers(userIds) {
+  if (!userIds.length) return [];
+  return PushToken.find({ userId: { $in: userIds }, enabled: true }).lean();
+}
+
 async function disableToken({ userId, token }) {
   return PushToken.findOneAndUpdate({ userId, token }, { enabled: false }, { new: true }).lean();
 }
@@ -25,6 +30,7 @@ async function deleteTokens(tokens) {
 module.exports = {
   upsertToken,
   listTokensForUser,
+  listTokensForUsers,
   disableToken,
   deleteTokens,
 };

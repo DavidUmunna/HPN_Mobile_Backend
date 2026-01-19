@@ -1,5 +1,9 @@
 const { Expo } = require('expo-server-sdk');
-const { deleteTokens, listTokensForUser } = require('../repositories/pushTokenRepository');
+const {
+  deleteTokens,
+  listTokensForUser,
+  listTokensForUsers,
+} = require('../repositories/pushTokenRepository');
 const { logger } = require('../utils/logger');
 
 const expo = new Expo(
@@ -29,15 +33,14 @@ function buildMessages(tokens, { title, body, data }) {
   }));
 }
 
-async function sendPushToUser(userId, { title, body, data }) {
-  const tokens = await listTokensForUser(userId);
-  if (!tokens.length) return { delivered: 0, failed: 0 };
+async function sendPushToTokens(tokens, { title, body, data }) {
+  const tokenValues = Array.from(new Set(tokens.filter(Boolean)));
+  if (!tokenValues.length) return { delivered: 0, failed: 0 };
 
-  const tokenValues = tokens.map((token) => token.token).filter(Boolean);
   const expoTokens = tokenValues.filter((token) => Expo.isExpoPushToken(token));
 
   if (!expoTokens.length) {
-    logger.warn('No valid Expo push tokens found for user', { userId });
+    logger.warn('No valid Expo push tokens found', { total: tokenValues.length });
     return { delivered: 0, failed: tokenValues.length };
   }
 
@@ -75,4 +78,23 @@ async function sendPushToUser(userId, { title, body, data }) {
   }
 }
 
-module.exports = { sendPushToUser };
+async function sendPushToUser(userId, payload) {
+  const tokens = await listTokensForUser(userId);
+  if (!tokens.length) return { delivered: 0, failed: 0 };
+  return sendPushToTokens(
+    tokens.map((token) => token.token),
+    payload
+  );
+}
+
+async function sendPushToUsers(userIds, payload) {
+  if (!userIds.length) return { delivered: 0, failed: 0 };
+  const tokens = await listTokensForUsers(userIds);
+  if (!tokens.length) return { delivered: 0, failed: 0 };
+  return sendPushToTokens(
+    tokens.map((token) => token.token),
+    payload
+  );
+}
+
+module.exports = { sendPushToTokens, sendPushToUser, sendPushToUsers };

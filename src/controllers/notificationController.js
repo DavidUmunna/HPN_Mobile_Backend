@@ -5,8 +5,10 @@ const {
   deleteOne,
   clearAll,
   seedNotification,
+  broadcastNotification,
 } = require('../services/notificationService');
 const { registerPushToken, unregisterPushToken } = require('../services/pushTokenService');
+const { findById } = require('../repositories/userRepository');
 
 async function listNotificationsController(req, res, next) {
   try {
@@ -55,6 +57,13 @@ async function clearNotificationsController(req, res, next) {
 
 async function seedNotificationController(req, res, next) {
   try {
+    const user = await findById(req.session.userId);
+    if (user?.role === 'admin' && req.body.audience !== 'self') {
+      const result = await broadcastNotification(req.session.userId, req.body);
+      res.status(201).json(result);
+      return;
+    }
+
     const notification = await seedNotification(req.session.userId, req.body);
     res.status(201).json({ notification });
   } catch (err) {
