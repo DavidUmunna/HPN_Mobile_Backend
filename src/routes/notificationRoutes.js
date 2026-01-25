@@ -24,8 +24,8 @@ router.post('/:id/read', requireAuth, markReadController);
 router.post('/read-all', requireAuth, markAllReadController);
 router.post('/push-tokens', requireAuth, validate(registerPushTokenSchema), registerPushTokenController);
 router.delete('/push-tokens', requireAuth, validate(unregisterPushTokenSchema), unregisterPushTokenController);
-router.delete('/:id', requireAdmin, deleteNotificationController);
-router.delete('/', requireAdmin, clearNotificationsController);
+router.delete('/:id', requireAuth, requireAdmin, deleteNotificationController);
+router.delete('/', requireAuth, requireAdmin, clearNotificationsController);
 router.post('/', requireAuth, validate(seedNotificationSchema), seedNotificationController);
 
 module.exports = router;

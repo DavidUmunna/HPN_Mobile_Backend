@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     name: { type: String, trim: true },
     phone: { type: String, trim: true },
+    address: { type: String, trim: true },
+    avatarUrl: { type: String, trim: true },
     role: { type: String, enum: ['member', 'staff', 'admin'], default: 'member' },
     isOnboarded: { type: Boolean, default: false },
     dependents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Dependent' }],

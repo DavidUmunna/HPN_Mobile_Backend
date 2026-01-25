@@ -17,16 +17,37 @@ afterAll(async () => {
 });
 
 describe('Auth routes', () => {
-  const agent = request.agent(app);
-
   test('signup and fetch profile', async () => {
-    const signupRes = await agent
+    const signupRes = await request(app)
       .post('/api/auth/signup')
       .send({ email: 'test@example.com', password: 'password123', name: 'Tester' })
       .expect(201);
     expect(signupRes.body.user.email).toBe('test@example.com');
 
-    const meRes = await agent.get('/api/auth/me').expect(200);
+    const meRes = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${signupRes.body.token}`)
+      .expect(200);
     expect(meRes.body.user.email).toBe('test@example.com');
+  });
+
+  test('complete onboarding updates profile', async () => {
+    const signupRes = await request(app)
+      .post('/api/auth/signup')
+      .send({ email: 'onboard@example.com', password: 'password123', name: 'Onboard' })
+      .expect(201);
+
+    const patchRes = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${signupRes.body.token}`)
+      .send({ isonboarded: true })
+      .expect(200);
+    expect(patchRes.body.user.isOnboarded).toBe(true);
+
+    const meRes = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${signupRes.body.token}`)
+      .expect(200);
+    expect(meRes.body.user.isOnboarded).toBe(true);
   });
 });

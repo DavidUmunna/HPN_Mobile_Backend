@@ -5,6 +5,7 @@ const {
   adminLogin,
   logout,
   getProfile,
+  updateProfile,
   requestPasswordReset,
   resetPasswordWithToken,
 } = require('../services/authService');
@@ -57,6 +58,15 @@ async function logoutController(req, res, next) {
 async function meController(req, res, next) {
   try {
     const user = await getProfile(req.session.userId);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateMeController(req, res, next) {
+  try {
+    const user = await updateProfile({ userId: req.session.userId, updates: req.body });
     res.json({ user });
   } catch (err) {
     next(err);
@@ -210,6 +220,7 @@ module.exports = {
   adminLoginController,
   logoutController,
   meController,
+  updateMeController,
   forgotPasswordController,
   resetPasswordController,
   resetPasswordPageController,

@@ -38,4 +38,27 @@ const resetPasswordSchema = Joi.object({
   query: Joi.object().unknown(true),
 });
 
-module.exports = { signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema };
+const updateProfileSchema = Joi.object({
+  body: Joi.object({
+    name: Joi.string().min(2).max(100).optional(),
+    email: Joi.string().email().optional(),
+    phone: Joi.string().max(50).optional(),
+    address: Joi.string().max(300).allow('').optional(),
+    avatarUrl: Joi.string().max(500).allow('').optional(),
+    isOnboarded: Joi.boolean().optional(),
+    isonboarded: Joi.boolean().optional(),
+    is_onboarded: Joi.boolean().optional(),
+  })
+    .min(1)
+    .required(),
+  params: Joi.object().unknown(true),
+  query: Joi.object().unknown(true),
+});
+
+module.exports = {
+  signupSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  updateProfileSchema,
+};

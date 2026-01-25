@@ -22,9 +22,33 @@ function toSafeUser(user) {
     email: user.email,
     name: user.name,
     phone: user.phone,
+    address: user.address,
+    avatarUrl: user.avatarUrl,
     role: user.role,
     isOnboarded: user.isOnboarded,
   };
+}
+
+function normalizeProfileUpdates(payload = {}) {
+  const updates = {};
+  if (typeof payload.name === 'string') updates.name = payload.name;
+  if (typeof payload.phone === 'string') updates.phone = payload.phone;
+  if (typeof payload.email === 'string') updates.email = payload.email;
+  if (typeof payload.address === 'string') updates.address = payload.address;
+  if (typeof payload.avatarUrl === 'string') updates.avatarUrl = payload.avatarUrl;
+
+  const onboardingValue =
+    typeof payload.isOnboarded === 'boolean'
+      ? payload.isOnboarded
+      : typeof payload.isonboarded === 'boolean'
+      ? payload.isonboarded
+      : typeof payload.is_onboarded === 'boolean'
+      ? payload.is_onboarded
+      : undefined;
+
+  if (onboardingValue !== undefined) updates.isOnboarded = onboardingValue;
+
+  return updates;
 }
 
 async function signup({ name, email, password, phone, role }) {
@@ -68,6 +92,49 @@ async function getProfile(userId) {
   const user = await findById(userId);
   if (!user) throw new AppError('User not found', 404);
   return toSafeUser(user);
+}
+
+async function updateProfile({ userId, updates }) {
+  let user;
+  try {
+    user = await findById(userId);
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid user id', 400);
+    throw err;
+  }
+
+  if (!user) throw new AppError('User not found', 404);
+
+  const normalized = normalizeProfileUpdates(updates);
+  if (Object.keys(normalized).length === 0) {
+    throw new AppError('No valid profile fields provided', 400);
+  }
+
+  if (normalized.email !== undefined) {
+    const email = normalized.email.trim().toLowerCase();
+    if (email && email !== user.email) {
+      const existing = await findByEmail(email);
+      if (existing && existing._id.toString() !== userId) {
+        throw new AppError('Email already in use', 409);
+      }
+      user.email = email;
+    }
+  }
+
+  if (normalized.name !== undefined) user.name = normalized.name;
+  if (normalized.phone !== undefined) user.phone = normalized.phone;
+  if (normalized.address !== undefined) user.address = normalized.address;
+  if (normalized.avatarUrl !== undefined) user.avatarUrl = normalized.avatarUrl;
+  if (normalized.isOnboarded !== undefined) user.isOnboarded = normalized.isOnboarded;
+
+  try {
+    const saved = await user.save();
+    return toSafeUser(saved);
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid user id', 400);
+    if (err?.code === 11000) throw new AppError('Email already in use', 409);
+    throw err;
+  }
 }
 
 async function requestPasswordReset({ email, baseUrl }) {
@@ -114,6 +181,7 @@ module.exports = {
   adminLogin,
   logout,
   getProfile,
+  updateProfile,
   requestPasswordReset,
   resetPasswordWithToken,
   toSafeUser,
