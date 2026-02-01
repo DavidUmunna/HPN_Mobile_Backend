@@ -4,6 +4,7 @@ const {
   attendanceSummaryController,
   eventsSummaryController,
   updateUserEmailController,
+  deleteUserController,
 } = require('../controllers/adminController');
 const { requireAuth, requireAdmin } = require('../middlewares/authMiddleware');
 const { validate } = require('../middlewares/validate');
@@ -17,5 +18,6 @@ router.get('/users', listUsersController);
 router.get('/attendance/summary', attendanceSummaryController);
 router.get('/events/summary', eventsSummaryController);
 router.patch('/users/:id/email', validate(changeUserEmailSchema), updateUserEmailController);
+router.delete('/users/:id', deleteUserController);
 
 module.exports = router;

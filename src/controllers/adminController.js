@@ -1,4 +1,4 @@
-const { listUsers, attendanceSummary, eventsSummary, updateUserEmail } = require('../services/adminService');
+const { listUsers, attendanceSummary, eventsSummary, updateUserEmail, deleteUser } = require('../services/adminService');
 
 async function listUsersController(_req, res, next) {
   try {
@@ -40,4 +40,14 @@ async function updateUserEmailController(req, res, next) {
   }
 }
 
-module.exports = { listUsersController, attendanceSummaryController, eventsSummaryController, updateUserEmailController };
+async function deleteUserController(req, res, next) {
+  try {
+    const result = await deleteUser(req.params.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+    console.log("delete user error",err)
+  }
+}
+
+module.exports = { listUsersController, attendanceSummaryController, eventsSummaryController, updateUserEmailController, deleteUserController };

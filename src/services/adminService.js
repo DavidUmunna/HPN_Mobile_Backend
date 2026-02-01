@@ -55,4 +55,15 @@ async function updateUserEmail({ userId, newEmail }) {
   }
 }
 
-module.exports = { listUsers, attendanceSummary, eventsSummary, updateUserEmail };
+async function deleteUser(userId) {
+  try {
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) throw new AppError('User not found', 404);
+    return { message: 'User deleted successfully', id: user._id.toString() };
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid user id', 400);
+    throw err;
+  }
+}
+
+module.exports = { listUsers, attendanceSummary, eventsSummary, updateUserEmail, deleteUser };
