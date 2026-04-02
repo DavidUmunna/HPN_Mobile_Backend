@@ -5,8 +5,8 @@ const donationSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     amountCents: { type: Number, required: true, min: 1 },
     currency: { type: String, default: 'usd' },
-    category: { type: String, enum: ['tithe', 'missions', 'building', 'special'], required: true },
-    type: { type: String, enum: ['one-time', 'monthly', 'yearly'], required: true },
+    category: { type: String, enum: ['Tithe', 'Missions', 'Building', 'Special'], required: true },
+    type: { type: String, enum: ['One-Time', 'Monthly', 'Yearly'], required: true },
     status: {
       type: String,
       enum: ['pending', 'succeeded', 'failed', 'cancelled'],

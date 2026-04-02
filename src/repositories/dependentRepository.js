@@ -13,4 +13,10 @@ async function listDependentsByUser(userId) {
   return Dependent.find({ userId }).sort({ createdAt: 1 }).lean();
 }
 
-module.exports = { createDependents, listDependentsByUser };
+async function replaceDependentsByUser(userId, dependents) {
+  await Dependent.deleteMany({ userId });
+  if (!dependents.length) return [];
+  return createDependents(userId, dependents);
+}
+
+module.exports = { createDependents, listDependentsByUser, replaceDependentsByUser };

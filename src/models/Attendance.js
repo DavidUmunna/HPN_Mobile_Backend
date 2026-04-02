@@ -5,6 +5,13 @@ const attendanceSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     timestamp: { type: Date, required: true },
     day: { type: String, required: true },
+    dependents: [
+      {
+        dependentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dependent' },
+        name: { type: String, trim: true, required: true },
+        age: { type: Number, required: true, min: 0 },
+      },
+    ],
     location: {
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true },

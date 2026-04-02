@@ -14,7 +14,7 @@ function sessionConfig(store) {
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: true  ,
       sameSite: 'none',
       maxAge: ttlSeconds * 1000,
     },

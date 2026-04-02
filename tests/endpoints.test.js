@@ -347,13 +347,13 @@ describe('Giving endpoints', () => {
     await request(app)
       .post('/api/giving/intent')
       .set(authHeader(token))
-      .send({ amount: 10, category: 'tithe', type: 'one-time' })
+      .send({ amount: 10, category: 'Tithe', type: 'One-Time' })
       .expect(500);
 
     await request(app)
       .post('/api/giving/subscription')
       .set(authHeader(token))
-      .send({ amount: 10, category: 'tithe', type: 'monthly' })
+      .send({ amount: 10, category: 'Tithe', type: 'Monthly' })
       .expect(500);
 
     await request(app)

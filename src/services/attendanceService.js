@@ -7,10 +7,13 @@ const {
   recent,
 } = require('../repositories/attendanceRepository');
 const { findById } = require('../repositories/userRepository');
-const { createDependents, listDependentsByUser } = require('../repositories/dependentRepository');
+const { listDependentsByUser, replaceDependentsByUser } = require('../repositories/dependentRepository');
 const { AppError } = require('../utils/errors');
 
 function toAttendanceResponse(record, dependents) {
+  const sourceDependents = Array.isArray(record.dependents) && record.dependents.length > 0
+    ? record.dependents
+    : dependents;
   const response = {
     id: record._id.toString(),
     timestamp: record.timestamp,
@@ -18,9 +21,9 @@ function toAttendanceResponse(record, dependents) {
     location: record.location,
     userId: record.userId?.toString(),
   };
-  if (Array.isArray(dependents)) {
-    response.dependents = dependents.map((dependent) => ({
-      id: dependent._id.toString(),
+  if (Array.isArray(sourceDependents)) {
+    response.dependents = sourceDependents.map((dependent) => ({
+      id: dependent._id?.toString?.() ?? dependent.dependentId?.toString?.() ?? dependent.id,
       name: dependent.name,
       age: dependent.age,
     }));
@@ -38,7 +41,7 @@ async function checkIn({ userId, latitude, longitude, timestamp, dependents }) {
   const user = await findById(userId);
   if (!user) throw new AppError('User not found', 404);
 
-  if ((!user.dependents || user.dependents.length === 0) && Array.isArray(dependents)) {
+  if (Array.isArray(dependents)) {
     const trimmed = dependents
       .map((dependent) => ({
         name: typeof dependent.name === 'string' ? dependent.name.trim() : '',
@@ -46,11 +49,9 @@ async function checkIn({ userId, latitude, longitude, timestamp, dependents }) {
       }))
       .filter((dependent) => dependent.name && Number.isFinite(dependent.age));
 
-    if (trimmed.length > 0) {
-      const created = await createDependents(userId, trimmed);
-      user.dependents = created.map((dependent) => dependent._id);
-      await user.save();
-    }
+    const savedDependents = await replaceDependentsByUser(userId, trimmed);
+    user.dependents = savedDependents.map((dependent) => dependent._id);
+    await user.save();
   }
 
   const dependentsList = user.dependents?.length ? await listDependentsByUser(userId) : [];
@@ -58,6 +59,11 @@ async function checkIn({ userId, latitude, longitude, timestamp, dependents }) {
     userId,
     timestamp: ts,
     day: ts.toDateString(),
+    dependents: dependentsList.map((dependent) => ({
+      dependentId: dependent._id,
+      name: dependent.name,
+      age: dependent.age,
+    })),
     location: { latitude, longitude },
   });
 
@@ -67,7 +73,11 @@ async function checkIn({ userId, latitude, longitude, timestamp, dependents }) {
 async function latestForUser(userId) {
   const record = await findLatestForUser(userId);
   if (!record) return null;
-  return toAttendanceResponse(record);
+  if (Array.isArray(record.dependents) && record.dependents.length > 0) {
+    return toAttendanceResponse(record);
+  }
+  const dependents = await listDependentsByUser(userId);
+  return toAttendanceResponse(record, dependents);
 }
 
 async function listForUser(userId) {

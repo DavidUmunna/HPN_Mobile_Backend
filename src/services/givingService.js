@@ -11,8 +11,8 @@ const {
   getDonationSummary,
 } = require('../repositories/donationRepository');
 
-const GIVING_CATEGORIES = ['tithe', 'missions', 'building', 'special'];
-const GIVING_TYPES = ['one-time', 'monthly', 'yearly'];
+const GIVING_CATEGORIES = ['Tithe', 'Missions', 'Building', 'Special'];
+const GIVING_TYPES = ['One-Time', 'Monthly', 'Yearly'];
 
 let stripeClient;
 
@@ -29,9 +29,9 @@ function getStripeClient() {
 function normalizeGivingType(type) {
   if (!type) return type;
   const normalized = type.toString().trim().toLowerCase();
-  if (normalized === 'one time' || normalized === 'one-time') return 'one-time';
-  if (normalized === 'monthly') return 'monthly';
-  if (normalized === 'yearly' || normalized === 'annual') return 'yearly';
+  if (normalized === 'one time' || normalized === 'one-time') return 'One-Time';
+  if (normalized === 'monthly') return 'Monthly';
+  if (normalized === 'yearly' || normalized === 'annual') return 'Yearly';
   return normalized;
 }
 
@@ -91,7 +91,7 @@ async function getGivingSummary(userId) {
 
 async function createPaymentIntent({ userId, amount, category, type, currency = 'usd' }) {
   const normalizedType = normalizeGivingType(type);
-  if (normalizedType !== 'one-time') {
+  if (normalizedType !== 'One-Time') {
     throw new AppError('Invalid giving type for one-time payment', 400);
   }
   if (!GIVING_CATEGORIES.includes(category)) {
@@ -102,6 +102,7 @@ async function createPaymentIntent({ userId, amount, category, type, currency = 
     throw new AppError('Invalid amount', 400);
   }
 
+  const stripe = getStripeClient();
   const donation = await createDonation({
     userId,
     amountCents,
@@ -111,31 +112,87 @@ async function createPaymentIntent({ userId, amount, category, type, currency = 
     status: 'pending',
   });
 
-  const stripe = getStripeClient();
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amountCents,
-    currency,
-    automatic_payment_methods: { enabled: true },
-    metadata: {
-      donationId: donation._id.toString(),
-      userId: userId.toString(),
-      category,
-      type: normalizedType,
-    },
-  });
+  let paymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: amountCents,
+      currency,
+      payment_method_types: ['card'],
+      metadata: {
+        donationId: donation._id.toString(),
+        userId: userId.toString(),
+        category,
+        type: normalizedType,
+      },
+    });
 
-  await updateDonationById(donation._id, { paymentIntentId: paymentIntent.id });
+    await updateDonationById(donation._id, { paymentIntentId: paymentIntent.id });
+
+    return {
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      donationId: donation._id.toString(),
+    };
+  } catch (err) {
+    if (paymentIntent?.id) {
+      await stripe.paymentIntents.cancel(paymentIntent.id).catch(() => undefined);
+    }
+    await updateDonationById(donation._id, {
+      paymentIntentId: paymentIntent?.id,
+      status: 'failed',
+    }).catch(() => undefined);
+    throw err;
+  }
+}
+
+async function cancelPaymentIntent({ userId, paymentIntentId }) {
+  const donation = await findDonationByPaymentIntentId(paymentIntentId);
+  if (!donation) throw new AppError('Donation not found', 404);
+  if (donation.userId?.toString() !== userId?.toString()) throw new AppError('Forbidden', 403);
+
+  if (donation.status !== 'pending') {
+    return { cancelled: donation.status === 'cancelled', status: donation.status };
+  }
+
+  const stripe = getStripeClient();
+  await stripe.paymentIntents.cancel(paymentIntentId);
+  await updateDonationById(donation._id, { status: 'cancelled' });
+
+  return { cancelled: true, status: 'cancelled' };
+}
+
+async function getPaymentIntentStatus({ userId, paymentIntentId }) {
+  const donation = await findDonationByPaymentIntentId(paymentIntentId);
+  if (!donation) throw new AppError('Donation not found', 404);
+  if (donation.userId?.toString() !== userId?.toString()) throw new AppError('Forbidden', 403);
+
+  let nextStatus = donation.status;
+
+  if (donation.status === 'pending' && process.env.STRIPE_SECRET_KEY) {
+    const stripe = getStripeClient();
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') nextStatus = 'succeeded';
+    else if (paymentIntent.status === 'canceled') nextStatus = 'cancelled';
+    else if (paymentIntent.status === 'requires_payment_method') nextStatus = 'failed';
+
+    if (nextStatus !== donation.status) {
+      await updateDonationById(donation._id, { status: nextStatus });
+    }
+  }
 
   return {
-    clientSecret: paymentIntent.client_secret,
-    paymentIntentId: paymentIntent.id,
-    donationId: donation._id.toString(),
+    status: nextStatus,
+    donation: toDonationResponse({
+      ...donation,
+      status: nextStatus,
+    }),
   };
 }
 
 async function createSubscription({ userId, amount, category, type, currency = 'usd' }) {
   const normalizedType = normalizeGivingType(type);
-  if (!['monthly', 'yearly'].includes(normalizedType)) {
+  if (!['Monthly', 'Yearly'].includes(normalizedType)) {
     throw new AppError('Invalid giving type for subscription', 400);
   }
   if (!GIVING_CATEGORIES.includes(category)) {
@@ -157,7 +214,7 @@ async function createSubscription({ userId, amount, category, type, currency = '
           currency,
           unit_amount: amountCents,
           product_data: { name: `${category} (${normalizedType})` },
-          recurring: { interval: normalizedType === 'monthly' ? 'month' : 'year' },
+          recurring: { interval: normalizedType === 'Monthly' ? 'month' : 'year' },
         },
       },
     ],
@@ -224,8 +281,8 @@ async function handleStripeWebhook(event) {
 
     const metadata = subscription?.metadata || invoice.metadata || {};
     const userId = metadata.userId;
-    const category = metadata.category || 'tithe';
-    const type = normalizeGivingType(metadata.type || 'monthly');
+    const category = metadata.category || 'Tithe';
+    const type = normalizeGivingType(metadata.type || 'Monthly');
 
     if (!userId) return;
 
@@ -256,6 +313,8 @@ module.exports = {
   listGivingTransactions,
   getGivingSummary,
   createPaymentIntent,
+  cancelPaymentIntent,
+  getPaymentIntentStatus,
   createSubscription,
   createSetupIntent,
   handleStripeWebhook,

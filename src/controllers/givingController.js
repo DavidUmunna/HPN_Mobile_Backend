@@ -2,6 +2,8 @@ const {
   listGivingTransactions,
   getGivingSummary,
   createPaymentIntent,
+  cancelPaymentIntent,
+  getPaymentIntentStatus,
   createSubscription,
   createSetupIntent,
   handleStripeWebhook,
@@ -30,6 +32,24 @@ async function createPaymentIntentController(req, res, next) {
   try {
     const result = await createPaymentIntent({ userId: req.session.userId, ...req.body });
     res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function cancelPaymentIntentController(req, res, next) {
+  try {
+    const result = await cancelPaymentIntent({ userId: req.session.userId, ...req.body });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getPaymentIntentStatusController(req, res, next) {
+  try {
+    const result = await getPaymentIntentStatus({ userId: req.session.userId, paymentIntentId: req.params.paymentIntentId });
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -76,6 +96,8 @@ module.exports = {
   listGivingTransactionsController,
   givingSummaryController,
   createPaymentIntentController,
+  cancelPaymentIntentController,
+  getPaymentIntentStatusController,
   createSubscriptionController,
   createSetupIntentController,
   stripeWebhookController,

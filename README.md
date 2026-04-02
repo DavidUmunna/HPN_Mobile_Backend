@@ -46,7 +46,7 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 
 ## Key endpoints (all under `/api`)
 - Auth: `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/change-password`, `POST /auth/forgot-password`, `POST /auth/reset-password`
-- Giving: `GET /giving`, `POST /giving`
+- Giving: `GET /giving/categories`, `GET /giving/summary`, `GET /giving/transactions`, `GET /giving/payment-intents/:paymentIntentId/status`, `POST /giving/intent`, `POST /giving/intent/cancel`, `POST /giving/setup-intent`, `POST /giving/webhook`
 - Sync: `POST /sync`
 - Events: `GET/POST /events`, `GET /events/:id`, `POST /events/:id/rsvp`
 - Prayers: `GET /prayers`, `POST /prayers`, `POST /prayers/:id/pray`
@@ -65,7 +65,14 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 - Admin broadcast: `POST /notifications` as an admin user sends to all users by default; send `{ audience: 'self' }` to target only yourself.
 - Config: optional `EXPO_ACCESS_TOKEN` for higher throughput.
 
-## Giving flow (Stripe, Apple Pay / Google Pay via Payment Sheet)
-- `GET /giving`: returns `{ transactions, totalGiven, thisMonth }` for the signed-in user.
-- `POST /giving`: body `{ amount, category, type, currency? }` -> creates a Stripe PaymentIntent with automatic payment methods enabled so Apple Pay / Google Pay work via Payment Sheet. Response includes the donation record plus `paymentIntentClientSecret` and `paymentProvider`.
-- Env: `STRIPE_SECRET_KEY` required for real payments (if absent, donations are marked succeeded without charging for local/dev). Set `APP_URL`/`CLIENT_ORIGIN` as usual for CORS/cookies.
+## Giving flow (Stripe one-time payments)
+- `GET /giving/categories`: returns the allowed giving categories.
+- `GET /giving/summary`: returns `{ totalGiven, thisMonth, transactionCount, currency }` for the signed-in user.
+- `GET /giving/transactions`: returns `{ transactions }` for the signed-in user. Only `succeeded` donations are listed.
+- `POST /giving/intent`: body `{ amount, category, type, currency? }` with `type = One-Time` -> creates a Stripe card PaymentIntent and a pending donation record. Response includes `clientSecret`, `paymentIntentId`, and `donationId`.
+- `POST /giving/intent/cancel`: body `{ paymentIntentId }` -> cancels a pending PaymentIntent and marks the donation `cancelled`.
+- `GET /giving/payment-intents/:paymentIntentId/status`: returns the donation status for settlement polling and updates pending records from Stripe when possible.
+- `POST /giving/webhook`: Stripe webhook endpoint that marks donations `succeeded` or `failed` after Stripe sends payment events.
+- Frontend flow: create intent, confirm with Stripe Elements using `clientSecret`, then poll `GET /giving/payment-intents/:paymentIntentId/status` until the donation settles.
+- Local webhook forwarding: `stripe listen --forward-to http://localhost:4000/api/giving/webhook`
+- Env: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` belong in the backend environment. `VITE_STRIPE_PUBLISHABLE_KEY` belongs in the web app environment.

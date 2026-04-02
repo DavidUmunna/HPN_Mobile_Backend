@@ -5,6 +5,8 @@ const {
   listGivingTransactionsController,
   givingSummaryController,
   createPaymentIntentController,
+  cancelPaymentIntentController,
+  getPaymentIntentStatusController,
   createSubscriptionController,
   createSetupIntentController,
   stripeWebhookController,
@@ -12,6 +14,8 @@ const {
 const {
   createPaymentIntentSchema,
   createSubscriptionSchema,
+  cancelPaymentIntentSchema,
+  paymentIntentStatusSchema,
   listTransactionsSchema,
 } = require('../validations/givingValidation');
 const { GIVING_CATEGORIES } = require('../services/givingService');
@@ -26,8 +30,10 @@ router.get('/categories', requireAuth, (_req, res) => {
 
 router.get('/summary', requireAuth, givingSummaryController);
 router.get('/transactions', requireAuth, validate(listTransactionsSchema), listGivingTransactionsController);
+router.get('/payment-intents/:paymentIntentId/status', requireAuth, validate(paymentIntentStatusSchema), getPaymentIntentStatusController);
 
 router.post('/intent', requireAuth, validate(createPaymentIntentSchema), createPaymentIntentController);
+router.post('/intent/cancel', requireAuth, validate(cancelPaymentIntentSchema), cancelPaymentIntentController);
 router.post('/subscription', requireAuth, validate(createSubscriptionSchema), createSubscriptionController);
 router.post('/setup-intent', requireAuth, createSetupIntentController);
 
