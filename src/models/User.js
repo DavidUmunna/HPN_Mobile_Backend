@@ -1,5 +1,16 @@
 const mongoose = require('mongoose');
 
+function normalizeExtendedJsonDate(value) {
+  if (!value || value instanceof Date) return value;
+
+  if (typeof value === 'object' && '$date' in value) {
+    const normalized = new Date(value.$date);
+    return Number.isNaN(normalized.getTime()) ? value : normalized;
+  }
+
+  return value;
+}
+
 const userSchema = new mongoose.Schema(
   {
     email: { type: String, unique: true, required: true, lowercase: true, trim: true },
@@ -17,6 +28,11 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre('validate', function normalizeLegacyTimestamps() {
+  this.createdAt = normalizeExtendedJsonDate(this.createdAt);
+  this.updatedAt = normalizeExtendedJsonDate(this.updatedAt);
+});
 
 //userSchema.index({ email: 1 });
 
