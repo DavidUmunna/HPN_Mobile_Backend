@@ -2,18 +2,6 @@ const session = require('express-session');
 const { RedisStore } = require('connect-redis');
 const { getRedisClient } = require('./redis');
 
-function isCookieSecure() {
-  if (process.env.SESSION_COOKIE_SECURE) {
-    return process.env.SESSION_COOKIE_SECURE === 'true';
-  }
-
-  return process.env.NODE_ENV === 'production';
-}
-
-function getSameSitePolicy() {
-  return process.env.SESSION_COOKIE_SAMESITE || (isCookieSecure() ? 'none' : 'lax');
-}
-
 function sessionConfig(store) {
   const ttlSeconds = Number(process.env.SESSION_TTL_SECONDS || 60 * 60 * 24 * 7);
 
@@ -26,8 +14,8 @@ function sessionConfig(store) {
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: isCookieSecure(),
-      sameSite: getSameSitePolicy(),
+      secure: true  ,
+      sameSite: 'none',
       maxAge: ttlSeconds * 1000,
     },
   };
