@@ -137,6 +137,35 @@ describe('Attendance endpoints', () => {
       .expect(200);
     expect(detailRes.body.record.id).toBe(recordId);
   });
+
+  test('repeat check-in on the same day updates the existing record', async () => {
+    const { token } = await signupUser({ email: 'repeat-attendee@example.com' });
+    const timestamp = '2026-04-05T09:00:00.000Z';
+
+    const firstRes = await request(app)
+      .post('/api/attendance/check-in')
+      .set(authHeader(token))
+      .send({ latitude: 12.34, longitude: 56.78, timestamp })
+      .expect(201);
+
+    const secondRes = await request(app)
+      .post('/api/attendance/check-in')
+      .set(authHeader(token))
+      .send({ latitude: 44.55, longitude: 66.77, timestamp: '2026-04-05T18:30:00.000Z' })
+      .expect(200);
+
+    expect(secondRes.body.record.id).toBe(firstRes.body.record.id);
+    expect(secondRes.body.record.location).toEqual({ latitude: 44.55, longitude: 66.77 });
+
+    const listRes = await request(app)
+      .get('/api/attendance')
+      .set(authHeader(token))
+      .expect(200);
+
+    expect(listRes.body.records).toHaveLength(1);
+    expect(listRes.body.records[0].id).toBe(firstRes.body.record.id);
+    expect(listRes.body.records[0].location).toEqual({ latitude: 44.55, longitude: 66.77 });
+  });
 });
 
 describe('Event endpoints', () => {

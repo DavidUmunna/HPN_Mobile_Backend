@@ -2,14 +2,14 @@ const { checkIn, latestForUser, listForUser, getAttendance } = require('../servi
 
 async function checkInController(req, res, next) {
   try {
-    const record = await checkIn({
+    const result = await checkIn({
       userId: req.session.userId,
       latitude: req.body.latitude,
       longitude: req.body.longitude,
       timestamp: req.body.timestamp,
       dependents: req.body.dependents,
     });
-    res.status(201).json({ record });
+    res.status(result.created ? 201 : 200).json({ record: result.record });
   } catch (err) {
     next(err);
   }

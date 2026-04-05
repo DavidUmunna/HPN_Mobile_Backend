@@ -1,5 +1,7 @@
 const {
   createAttendance,
+  updateAttendance,
+  findByUserAndAttendanceDateKey,
   findLatestForUser,
   findForUser,
   findByIdForUser,
@@ -9,6 +11,18 @@ const {
 const { findById } = require('../repositories/userRepository');
 const { listDependentsByUser, replaceDependentsByUser } = require('../repositories/dependentRepository');
 const { AppError } = require('../utils/errors');
+
+function buildAttendanceDateKey(timestamp) {
+  const year = timestamp.getFullYear();
+  const month = String(timestamp.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(timestamp.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dayOfMonth}`;
+}
+
+function buildDayLabel(timestamp) {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return days[timestamp.getDay()];
+}
 
 function toAttendanceResponse(record, dependents) {
   const sourceDependents = Array.isArray(record.dependents) && record.dependents.length > 0
@@ -55,19 +69,42 @@ async function checkIn({ userId, latitude, longitude, timestamp, dependents }) {
   }
 
   const dependentsList = user.dependents?.length ? await listDependentsByUser(userId) : [];
-  const record = await createAttendance({
+  const attendanceDateKey = buildAttendanceDateKey(ts);
+  const payload = {
     userId,
     timestamp: ts,
-    day: ts.toDateString(),
+    day: buildDayLabel(ts),
+    attendanceDateKey,
     dependents: dependentsList.map((dependent) => ({
       dependentId: dependent._id,
       name: dependent.name,
       age: dependent.age,
     })),
     location: { latitude, longitude },
-  });
+  };
 
-  return toAttendanceResponse(record, dependentsList);
+  let existingRecord = await findByUserAndAttendanceDateKey(userId, attendanceDateKey);
+  let record;
+  let created = false;
+
+  if (existingRecord) {
+    record = await updateAttendance(existingRecord._id, payload);
+  } else {
+    try {
+      record = await createAttendance(payload);
+      created = true;
+    } catch (err) {
+      if (err?.code === 11000) {
+        existingRecord = await findByUserAndAttendanceDateKey(userId, attendanceDateKey);
+        if (!existingRecord) throw err;
+        record = await updateAttendance(existingRecord._id, payload);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  return { record: toAttendanceResponse(record, dependentsList), created };
 }
 
 async function latestForUser(userId) {
