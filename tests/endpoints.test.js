@@ -75,6 +75,51 @@ describe('Auth endpoints', () => {
       .expect(204);
   });
 
+  test('attendance admin workflow supports list, detail, export, and delete', async () => {
+    const admin = await signupUser({ email: 'attendance-admin@example.com', role: 'admin' });
+    const member = await signupUser({ email: 'attendance-member@example.com' });
+
+    const checkInRes = await request(app)
+      .post('/api/attendance/check-in')
+      .set(authHeader(member.token))
+      .send({ latitude: 11.11, longitude: 22.22 })
+      .expect(201);
+
+    const attendanceId = checkInRes.body.record.id;
+
+    const listRes = await request(app)
+      .get('/api/admin/attendance')
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(Array.isArray(listRes.body.records)).toBe(true);
+    expect(listRes.body.records.some((record) => record.id === attendanceId)).toBe(true);
+
+    const detailRes = await request(app)
+      .get(`/api/admin/attendance/${attendanceId}`)
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(detailRes.body.record.id).toBe(attendanceId);
+
+    const exportRes = await request(app)
+      .get('/api/admin/attendance/export')
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(exportRes.headers['content-type']).toMatch(/spreadsheetml.sheet/);
+    expect(exportRes.headers['content-disposition']).toMatch(/attendance-.*\.xlsx/);
+
+    const deleteRes = await request(app)
+      .delete(`/api/admin/attendance/${attendanceId}`)
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(deleteRes.body.deleted).toBe(true);
+
+    const afterDeleteRes = await request(app)
+      .get('/api/admin/attendance')
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(afterDeleteRes.body.records.some((record) => record.id === attendanceId)).toBe(false);
+  });
+
   test('admin login honors role', async () => {
     await signupUser({ email: 'member@example.com', role: 'member' });
     await request(app)

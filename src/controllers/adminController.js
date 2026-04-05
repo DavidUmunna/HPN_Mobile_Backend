@@ -1,4 +1,14 @@
-const { listUsers, attendanceSummary, eventsSummary, updateUserEmail, deleteUser } = require('../services/adminService');
+const {
+  listUsers,
+  attendanceSummary,
+  listAttendanceRecords,
+  getAttendanceRecord,
+  deleteAttendanceRecord,
+  exportAttendanceWorkbook,
+  eventsSummary,
+  updateUserEmail,
+  deleteUser,
+} = require('../services/adminService');
 
 async function listUsersController(_req, res, next) {
   try {
@@ -17,6 +27,45 @@ async function attendanceSummaryController(_req, res, next) {
   } catch (err) {
     next(err);
     console.log("attendance summary error",err)
+  }
+}
+
+async function listAttendanceRecordsController(_req, res, next) {
+  try {
+    const records = await listAttendanceRecords();
+    res.json({ records });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getAttendanceRecordController(req, res, next) {
+  try {
+    const record = await getAttendanceRecord(req.params.id);
+    res.json({ record });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteAttendanceRecordController(req, res, next) {
+  try {
+    const result = await deleteAttendanceRecord(req.params.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function exportAttendanceController(_req, res, next) {
+  try {
+    const workbook = await exportAttendanceWorkbook();
+    const filename = `attendance-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(workbook);
+  } catch (err) {
+    next(err);
   }
 }
 
@@ -50,4 +99,14 @@ async function deleteUserController(req, res, next) {
   }
 }
 
-module.exports = { listUsersController, attendanceSummaryController, eventsSummaryController, updateUserEmailController, deleteUserController };
+module.exports = {
+  listUsersController,
+  attendanceSummaryController,
+  listAttendanceRecordsController,
+  getAttendanceRecordController,
+  deleteAttendanceRecordController,
+  exportAttendanceController,
+  eventsSummaryController,
+  updateUserEmailController,
+  deleteUserController,
+};

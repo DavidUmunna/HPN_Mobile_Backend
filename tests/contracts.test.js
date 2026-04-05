@@ -197,7 +197,6 @@ describe('Contract: auth', () => {
       .send({ email: signup.user.email, password: 'password123' })
       .expect(200);
     assertSchema(authResponseSchema, loginRes.body);
-
     const meRes = await request(app)
       .get('/api/auth/me')
       .set(authHeader(loginRes.body.token))
@@ -208,6 +207,49 @@ describe('Contract: auth', () => {
       .post('/api/auth/logout')
       .set(authHeader(loginRes.body.token))
       .expect(204);
+  });
+
+  test('attendance management contracts', async () => {
+    const admin = await signupUser({ email: makeEmail('attendance-admin'), role: 'admin' });
+    const member = await signupUser({ email: makeEmail('attendance-member') });
+
+    const checkInRes = await request(app)
+      .post('/api/attendance/check-in')
+      .set(authHeader(member.token))
+      .send({ latitude: 10.1, longitude: -20.2 })
+      .expect(201);
+
+    const attendanceId = checkInRes.body.record.id;
+
+    const listRes = await request(app)
+      .get('/api/admin/attendance')
+      .set(authHeader(admin.token))
+      .expect(200);
+    assertSchema(Joi.object({ records: Joi.array().items(attendanceSchema).required() }).required(), listRes.body);
+
+    const detailRes = await request(app)
+      .get(`/api/admin/attendance/${attendanceId}`)
+      .set(authHeader(admin.token))
+      .expect(200);
+    assertSchema(Joi.object({ record: attendanceSchema.required() }).required(), detailRes.body);
+
+    const exportRes = await request(app)
+      .get('/api/admin/attendance/export')
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(exportRes.headers['content-type']).toMatch(/spreadsheetml.sheet/);
+
+    const deleteRes = await request(app)
+      .delete(`/api/admin/attendance/${attendanceId}`)
+      .set(authHeader(admin.token))
+      .expect(200);
+    assertSchema(
+      Joi.object({
+        deleted: Joi.boolean().valid(true).required(),
+        id: objectId.required(),
+      }).required(),
+      deleteRes.body
+    );
   });
 
   test('forgot/reset contracts', async () => {

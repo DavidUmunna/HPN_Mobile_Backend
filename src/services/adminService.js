@@ -2,6 +2,24 @@ const User = require('../models/User');
 const Event = require('../models/Event');
 const Attendance = require('../models/Attendance');
 const { AppError } = require('../utils/errors');
+const XLSX = require('xlsx');
+
+function toAttendanceRecord(record) {
+  return {
+    id: record._id.toString(),
+    userId: record.userId?.toString(),
+    timestamp: record.timestamp,
+    day: record.day,
+    location: record.location,
+    dependents: Array.isArray(record.dependents)
+      ? record.dependents.map((dependent) => ({
+          id: dependent.dependentId?.toString(),
+          name: dependent.name,
+          age: dependent.age,
+        }))
+      : [],
+  };
+}
 
 async function listUsers() {
   const users = await User.find().sort({ createdAt: -1 }).lean();
@@ -19,13 +37,57 @@ async function attendanceSummary() {
   const latest = await Attendance.find().sort({ timestamp: -1 }).limit(5).lean();
   return {
     totalCheckIns: total,
-    recent: latest.map((r) => ({
-      id: r._id.toString(),
-      userId: r.userId?.toString(),
-      timestamp: r.timestamp,
-      location: r.location,
-    })),
+    recent: latest.map(toAttendanceRecord),
   };
+}
+
+async function listAttendanceRecords() {
+  const records = await Attendance.find().sort({ timestamp: -1 }).lean();
+  return records.map(toAttendanceRecord);
+}
+
+async function getAttendanceRecord(attendanceId) {
+  try {
+    const record = await Attendance.findById(attendanceId).lean();
+    if (!record) throw new AppError('Attendance record not found', 404);
+    return toAttendanceRecord(record);
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid attendance id', 400);
+    throw err;
+  }
+}
+
+async function deleteAttendanceRecord(attendanceId) {
+  try {
+    const record = await Attendance.findByIdAndDelete(attendanceId).lean();
+    if (!record) throw new AppError('Attendance record not found', 404);
+    return { deleted: true, id: record._id.toString() };
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid attendance id', 400);
+    throw err;
+  }
+}
+
+async function exportAttendanceWorkbook() {
+  const records = await Attendance.find().sort({ timestamp: -1 }).lean();
+  const rows = records.map((record) => ({
+    id: record._id.toString(),
+    userId: record.userId?.toString() || '',
+    timestamp: record.timestamp instanceof Date ? record.timestamp.toISOString() : record.timestamp,
+    day: record.day || '',
+    latitude: record.location?.latitude ?? '',
+    longitude: record.location?.longitude ?? '',
+    dependentsCount: Array.isArray(record.dependents) ? record.dependents.length : 0,
+    dependents: Array.isArray(record.dependents)
+      ? record.dependents.map((dependent) => `${dependent.name} (${dependent.age})`).join(', ')
+      : '',
+  }));
+
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
+
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 }
 
 async function eventsSummary() {
@@ -66,4 +128,14 @@ async function deleteUser(userId) {
   }
 }
 
-module.exports = { listUsers, attendanceSummary, eventsSummary, updateUserEmail, deleteUser };
+module.exports = {
+  listUsers,
+  attendanceSummary,
+  listAttendanceRecords,
+  getAttendanceRecord,
+  deleteAttendanceRecord,
+  exportAttendanceWorkbook,
+  eventsSummary,
+  updateUserEmail,
+  deleteUser,
+};
