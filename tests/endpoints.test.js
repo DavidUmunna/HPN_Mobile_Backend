@@ -77,7 +77,10 @@ describe('Auth endpoints', () => {
 
   test('attendance admin workflow supports list, detail, export, and delete', async () => {
     const admin = await signupUser({ email: 'attendance-admin@example.com', role: 'admin' });
-    const member = await signupUser({ email: 'attendance-member@example.com' });
+    const member = await signupUser({
+      email: 'attendance-member@example.com',
+      name: 'Attendance Member',
+    });
 
     const checkInRes = await request(app)
       .post('/api/attendance/check-in')
@@ -93,12 +96,24 @@ describe('Auth endpoints', () => {
       .expect(200);
     expect(Array.isArray(listRes.body.records)).toBe(true);
     expect(listRes.body.records.some((record) => record.id === attendanceId)).toBe(true);
+    expect(listRes.body.records.find((record) => record.id === attendanceId)?.userName).toBe(
+      'Attendance Member'
+    );
 
     const detailRes = await request(app)
       .get(`/api/admin/attendance/${attendanceId}`)
       .set(authHeader(admin.token))
       .expect(200);
     expect(detailRes.body.record.id).toBe(attendanceId);
+    expect(detailRes.body.record.userName).toBe('Attendance Member');
+
+    const summaryRes = await request(app)
+      .get('/api/admin/attendance/summary')
+      .set(authHeader(admin.token))
+      .expect(200);
+    expect(summaryRes.body.analytics.attendedCount).toBe(1);
+    expect(summaryRes.body.analytics.absentCount).toBe(0);
+    expect(summaryRes.body.analytics.attendedUsers[0].name).toBe('Attendance Member');
 
     const exportRes = await request(app)
       .get('/api/admin/attendance/export')

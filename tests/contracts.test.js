@@ -80,6 +80,7 @@ const attendanceSchema = Joi.object({
     longitude: Joi.number().required(),
   }).required(),
   userId: objectId.required(),
+  userName: optionalText.optional(),
   dependents: Joi.array()
     .items(
       Joi.object({
@@ -89,6 +90,13 @@ const attendanceSchema = Joi.object({
       })
     )
     .optional(),
+}).unknown(true);
+
+const attendanceAnalyticsUserSchema = Joi.object({
+  id: objectId.required(),
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  role: Joi.string().valid('member', 'staff', 'admin').required(),
 }).unknown(true);
 
 const eventSchema = Joi.object({
@@ -574,6 +582,14 @@ describe('Contract: admin', () => {
       Joi.object({
         totalCheckIns: Joi.number().required(),
         recent: Joi.array().items(attendanceSchema).required(),
+        analytics: Joi.object({
+          attendanceLabel: Joi.alternatives().try(Joi.string(), Joi.valid(null)).required(),
+          totalEligibleUsers: Joi.number().required(),
+          attendedCount: Joi.number().required(),
+          absentCount: Joi.number().required(),
+          attendedUsers: Joi.array().items(attendanceAnalyticsUserSchema).required(),
+          absentUsers: Joi.array().items(attendanceAnalyticsUserSchema).required(),
+        }).required(),
       }).required(),
       attendanceRes.body
     );

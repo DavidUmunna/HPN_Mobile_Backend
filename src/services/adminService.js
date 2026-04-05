@@ -4,10 +4,38 @@ const Attendance = require('../models/Attendance');
 const { AppError } = require('../utils/errors');
 const XLSX = require('xlsx');
 
+function buildAttendanceAnalyticsLabel(record) {
+  if (!record?.timestamp) return null;
+  const date = new Date(record.timestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  const day = record.day || date.toLocaleDateString('en-GB', { weekday: 'long' });
+  const formattedDate = date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  return `${day}, ${formattedDate}`;
+}
+
+function toAttendanceAnalyticsUser(user) {
+  return {
+    id: user._id.toString(),
+    name: user.name || user.email,
+    email: user.email,
+    role: user.role,
+  };
+}
+
 function toAttendanceRecord(record) {
+  const populatedUser =
+    record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
+      ? record.userId
+      : null;
+
   return {
     id: record._id.toString(),
-    userId: record.userId?.toString(),
+    userId: populatedUser?._id?.toString?.() ?? record.userId?.toString(),
+    userName: populatedUser?.name || undefined,
     timestamp: record.timestamp,
     day: record.day,
     location: record.location,
@@ -34,21 +62,64 @@ async function listUsers() {
 
 async function attendanceSummary() {
   const total = await Attendance.countDocuments();
-  const latest = await Attendance.find().sort({ timestamp: -1 }).limit(5).lean();
+  const latest = await Attendance.find()
+    .populate('userId', 'name')
+    .sort({ timestamp: -1 })
+    .limit(5)
+    .lean();
+
+  const eligibleUsers = await User.find({ role: { $in: ['member', 'staff'] } })
+    .sort({ name: 1, email: 1 })
+    .lean();
+
+  const latestRecord = latest[0] || null;
+  let analytics = {
+    attendanceLabel: null,
+    totalEligibleUsers: eligibleUsers.length,
+    attendedCount: 0,
+    absentCount: eligibleUsers.length,
+    attendedUsers: [],
+    absentUsers: eligibleUsers.map(toAttendanceAnalyticsUser),
+  };
+
+  if (latestRecord?.attendanceDateKey) {
+    const recordsForLatestDay = await Attendance.find({ attendanceDateKey: latestRecord.attendanceDateKey })
+      .populate('userId', 'name email role')
+      .lean();
+
+    const attendedUsers = recordsForLatestDay
+      .map((record) => record.userId)
+      .filter((user) => user && typeof user === 'object' && !Array.isArray(user))
+      .filter((user) => user.role === 'member' || user.role === 'staff');
+
+    const attendedUserIds = new Set(attendedUsers.map((user) => user._id.toString()));
+    const absentUsers = eligibleUsers.filter((user) => !attendedUserIds.has(user._id.toString()));
+
+    analytics = {
+      attendanceLabel: buildAttendanceAnalyticsLabel(latestRecord),
+      totalEligibleUsers: eligibleUsers.length,
+      attendedCount: attendedUsers.length,
+      absentCount: absentUsers.length,
+      attendedUsers: attendedUsers.map(toAttendanceAnalyticsUser),
+      absentUsers: absentUsers.map(toAttendanceAnalyticsUser),
+    };
+  }
+
   return {
     totalCheckIns: total,
     recent: latest.map(toAttendanceRecord),
+    analytics,
   };
 }
 
 async function listAttendanceRecords() {
-  const records = await Attendance.find().sort({ timestamp: -1 }).lean();
+  const records = await Attendance.find().populate('userId', 'name').sort({ timestamp: -1 }).lean();
   return records.map(toAttendanceRecord);
 }
 
 async function getAttendanceRecord(attendanceId) {
   try {
-    const record = await Attendance.findById(attendanceId).lean();
+    const record = await Attendance.findById(attendanceId).populate('userId', 'name').lean();
     if (!record) throw new AppError('Attendance record not found', 404);
     return toAttendanceRecord(record);
   } catch (err) {
@@ -69,10 +140,14 @@ async function deleteAttendanceRecord(attendanceId) {
 }
 
 async function exportAttendanceWorkbook() {
-  const records = await Attendance.find().sort({ timestamp: -1 }).lean();
+  const records = await Attendance.find().populate('userId', 'name').sort({ timestamp: -1 }).lean();
   const rows = records.map((record) => ({
     id: record._id.toString(),
     userId: record.userId?.toString() || '',
+    userName:
+      record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
+        ? record.userId.name || ''
+        : '',
     timestamp: record.timestamp instanceof Date ? record.timestamp.toISOString() : record.timestamp,
     day: record.day || '',
     latitude: record.location?.latitude ?? '',
