@@ -17,12 +17,13 @@ function getTransporter() {
     throw new AppError('SMTP host not configured', 500);
   }
 
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+  const secure = process.env.SMTP_SECURE === 'false' || port === 587;
 
   transporter = nodemailer.createTransport({
     host,
     port,
     secure,
+    requireTLS:true,
     auth: user && pass ? { user, pass } : undefined,
     connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 15000),
     greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10000),
