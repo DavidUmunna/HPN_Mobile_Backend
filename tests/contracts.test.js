@@ -167,6 +167,7 @@ beforeAll(async () => {
   const uri = mongoServer.getUri();
   process.env.MONGODB_URI = uri;
   process.env.MONGO_URI = uri;
+  process.env.CLIENT_ORIGIN = 'http://localhost:3000';
   await mongoose.connect(uri);
 });
 
@@ -217,7 +218,8 @@ describe('Contract: auth', () => {
       .expect(200);
     assertSchema(Joi.object({ message: Joi.string().required() }).required(), forgotRes.body);
 
-    await request(app).get('/api/auth/reset-password?token=token').expect(200);
+    const redirectRes = await request(app).get('/api/auth/reset-password?token=token').expect(302);
+    expect(redirectRes.headers.location).toBe('http://localhost:3000/reset-password?token=token');
 
     const resetRes = await request(app)
       .post('/api/auth/reset-password')

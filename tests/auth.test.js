@@ -13,6 +13,7 @@ beforeAll(async () => {
   const uri = mongoServer.getUri();
   process.env.MONGODB_URI = uri;
   process.env.MONGO_URI = uri;
+  process.env.CLIENT_ORIGIN = 'http://localhost:3000';
   await mongoose.connect(uri);
 });
 
@@ -90,5 +91,17 @@ describe('Auth routes', () => {
 
     expect(meRes.body.user.email).toBe('legacy-onboard@example.com');
     expect(meRes.body.user.isOnboarded).toBe(true);
+  });
+
+  test('reset password accepts token from query string', async () => {
+    await request(app)
+      .post('/api/auth/signup')
+      .send({ email: 'reset-query@example.com', password: 'password123', name: 'Reset Query' })
+      .expect(201);
+
+    await request(app)
+      .post('/api/auth/reset-password?token=badtoken')
+      .send({ password: 'newpassword123' })
+      .expect(400);
   });
 });

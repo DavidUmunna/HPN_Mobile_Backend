@@ -58,6 +58,7 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 - Session cookies (web): login/signup set `session.userId`; cookie keeps you logged in.
 - JWT (native/mobile): login/signup responses include `{ user, token }`. Send `Authorization: Bearer <token>` on future requests. Middleware accepts either session or bearer.
 - Config: `JWT_SECRET` (default `dev-secret-change-me`), `JWT_EXPIRES_IN` (default `7d`).
+- Password reset UI: the backend only sends reset links and validates reset tokens. Set `RESET_PASSWORD_URL` or `CLIENT_RESET_PASSWORD_URL` to your frontend reset page, or set `CLIENT_ORIGIN` and the backend will use `${CLIENT_ORIGIN}/reset-password`.
 
 ## Push notifications (Expo)
 - Register device token: `POST /notifications/push-tokens` body `{ token, platform }` where `token` is an Expo push token.

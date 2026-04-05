@@ -16,6 +16,20 @@ const { signAuthToken } = require('../utils/jwt');
 const SALT_ROUNDS = 10;
 const RESET_TOKEN_TTL_MINUTES = Number(process.env.RESET_TOKEN_TTL_MINUTES || 60);
 
+function shouldLogPasswordResetLink() {
+  return process.env.LOG_PASSWORD_RESET_LINKS === 'true' || process.env.NODE_ENV !== 'production';
+}
+
+function buildPasswordResetLink(resetPageUrl, token) {
+  if (!resetPageUrl) {
+    throw new AppError('Reset password UI URL not configured', 500);
+  }
+
+  const normalizedUrl = resetPageUrl.replace(/\/$/, '');
+  const separator = normalizedUrl.includes('?') ? '&' : '?';
+  return `${normalizedUrl}${separator}token=${encodeURIComponent(token)}`;
+}
+
 function toSafeUser(user) {
   return {
     id: user._id.toString(),
@@ -137,13 +151,11 @@ async function updateProfile({ userId, updates }) {
   }
 }
 
-async function requestPasswordReset({ email, baseUrl }) {
+async function requestPasswordReset({ email, resetPageUrl }) {
   const user = await findByEmail(email);
   if (!user) return;
 
-  if (!baseUrl) {
-    throw new AppError('Reset base URL not configured', 500);
-  }
+  if (!resetPageUrl) throw new AppError('Reset password UI URL not configured', 500);
 
   const rawToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -151,8 +163,16 @@ async function requestPasswordReset({ email, baseUrl }) {
 
   await setResetToken(user._id, { tokenHash, expiresAt });
 
-  const trimmedBaseUrl = baseUrl.replace(/\/$/, '');
-  const resetLink = `${trimmedBaseUrl}/api/auth/reset-password?token=${rawToken}`;
+  const resetLink = buildPasswordResetLink(resetPageUrl, rawToken);
+
+  if (shouldLogPasswordResetLink()) {
+    logger.info('Generated password reset link', {
+      userId: user._id.toString(),
+      email: user.email,
+      resetLink,
+      expiresAt: expiresAt.toISOString(),
+    });
+  }
 
   const subject = 'Reset your HPN password';
   const text = `You requested a password reset. Open this link to set a new password: ${resetLink}`;
@@ -185,4 +205,5 @@ module.exports = {
   requestPasswordReset,
   resetPasswordWithToken,
   toSafeUser,
+  buildPasswordResetLink,
 };

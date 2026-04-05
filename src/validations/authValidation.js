@@ -31,11 +31,19 @@ const forgotPasswordSchema = Joi.object({
 
 const resetPasswordSchema = Joi.object({
   body: Joi.object({
-    token: Joi.string().required(),
+    token: Joi.string().optional(),
     password: Joi.string().min(8).required(),
   }).required(),
   params: Joi.object().unknown(true),
-  query: Joi.object().unknown(true),
+  query: Joi.object({
+    token: Joi.string().optional(),
+  }).unknown(true),
+}).custom((value, helpers) => {
+  if (!value.body.token && !value.query.token) {
+    return helpers.message('Reset token is required.');
+  }
+
+  return value;
 });
 
 const updateProfileSchema = Joi.object({
