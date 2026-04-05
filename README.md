@@ -59,6 +59,7 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 - JWT (native/mobile): login/signup responses include `{ user, token }`. Send `Authorization: Bearer <token>` on future requests. Middleware accepts either session or bearer.
 - Config: `JWT_SECRET` (default `dev-secret-change-me`), `JWT_EXPIRES_IN` (default `7d`).
 - Password reset UI: the backend only sends reset links and validates reset tokens. Set `RESET_PASSWORD_URL` or `CLIENT_RESET_PASSWORD_URL` to your frontend reset page, or set `CLIENT_ORIGIN` and the backend will use `${CLIENT_ORIGIN}/reset-password`.
+- Email delivery: password reset emails are sent through Resend. Set `RESEND_API_KEY` and `EMAIL_FROM` in the backend environment.
 
 ## Push notifications (Expo)
 - Register device token: `POST /notifications/push-tokens` body `{ token, platform }` where `token` is an Expo push token.
@@ -77,3 +78,10 @@ SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=
 - Frontend flow: create intent, confirm with Stripe Elements using `clientSecret`, then poll `GET /giving/payment-intents/:paymentIntentId/status` until the donation settles.
 - Local webhook forwarding: `stripe listen --forward-to http://localhost:4000/api/giving/webhook`
 - Env: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` belong in the backend environment. `VITE_STRIPE_PUBLISHABLE_KEY` belongs in the web app environment.
+
+## Email configuration
+- Required for password reset: `RESEND_API_KEY` and `EMAIL_FROM`
+- Example values:
+  - `RESEND_API_KEY=re_...`
+  - `EMAIL_FROM=noreply@your-domain.com`
+- `EMAIL_FROM` must use a sender/domain verified in Resend.
