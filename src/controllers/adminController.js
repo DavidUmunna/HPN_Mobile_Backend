@@ -30,10 +30,13 @@ async function attendanceSummaryController(_req, res, next) {
   }
 }
 
-async function listAttendanceRecordsController(_req, res, next) {
+async function listAttendanceRecordsController(req, res, next) {
   try {
-    const records = await listAttendanceRecords();
-    res.json({ records });
+    const result = await listAttendanceRecords({
+      page: req.query.page,
+      limit: req.query.limit,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }

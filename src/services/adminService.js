@@ -3,6 +3,7 @@ const Event = require('../models/Event');
 const Attendance = require('../models/Attendance');
 const { AppError } = require('../utils/errors');
 const XLSX = require('xlsx');
+const { buildPagination } = require('../utils/pagination');
 
 function buildAttendanceAnalyticsLabel(record) {
   if (!record?.timestamp) return null;
@@ -112,9 +113,27 @@ async function attendanceSummary() {
   };
 }
 
-async function listAttendanceRecords() {
-  const records = await Attendance.find().populate('userId', 'name').sort({ timestamp: -1 }).lean();
-  return records.map(toAttendanceRecord);
+async function listAttendanceRecords({ page, limit } = {}) {
+  const pagination = buildPagination({ page, limit });
+  const [totalRecords, records] = await Promise.all([
+    Attendance.countDocuments(),
+    Attendance.find()
+      .populate('userId', 'name')
+      .sort({ timestamp: -1 })
+      .skip(pagination.skip)
+      .limit(pagination.limit)
+      .lean(),
+  ]);
+
+  return {
+    records: records.map(toAttendanceRecord),
+    pagination: {
+      page: pagination.page,
+      limit: pagination.limit,
+      totalRecords,
+      totalPages: Math.max(Math.ceil(totalRecords / pagination.limit), 1),
+    },
+  };
 }
 
 async function getAttendanceRecord(attendanceId) {

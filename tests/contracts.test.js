@@ -92,6 +92,13 @@ const attendanceSchema = Joi.object({
     .optional(),
 }).unknown(true);
 
+const paginationSchema = Joi.object({
+  page: Joi.number().integer().min(1).required(),
+  limit: Joi.number().integer().min(1).required(),
+  totalRecords: Joi.number().integer().min(0).required(),
+  totalPages: Joi.number().integer().min(1).required(),
+}).required();
+
 const attendanceAnalyticsUserSchema = Joi.object({
   id: objectId.required(),
   name: Joi.string().required(),
@@ -230,10 +237,16 @@ describe('Contract: auth', () => {
     const attendanceId = checkInRes.body.record.id;
 
     const listRes = await request(app)
-      .get('/api/admin/attendance')
+      .get('/api/admin/attendance?page=1&limit=10')
       .set(authHeader(admin.token))
       .expect(200);
-    assertSchema(Joi.object({ records: Joi.array().items(attendanceSchema).required() }).required(), listRes.body);
+    assertSchema(
+      Joi.object({
+        records: Joi.array().items(attendanceSchema).required(),
+        pagination: paginationSchema,
+      }).required(),
+      listRes.body
+    );
 
     const detailRes = await request(app)
       .get(`/api/admin/attendance/${attendanceId}`)

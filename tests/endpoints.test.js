@@ -91,11 +91,13 @@ describe('Auth endpoints', () => {
     const attendanceId = checkInRes.body.record.id;
 
     const listRes = await request(app)
-      .get('/api/admin/attendance')
+      .get('/api/admin/attendance?page=1&limit=10')
       .set(authHeader(admin.token))
       .expect(200);
     expect(Array.isArray(listRes.body.records)).toBe(true);
     expect(listRes.body.records.some((record) => record.id === attendanceId)).toBe(true);
+    expect(listRes.body.pagination.page).toBe(1);
+    expect(listRes.body.pagination.limit).toBe(10);
     expect(listRes.body.records.find((record) => record.id === attendanceId)?.userName).toBe(
       'Attendance Member'
     );
@@ -129,7 +131,7 @@ describe('Auth endpoints', () => {
     expect(deleteRes.body.deleted).toBe(true);
 
     const afterDeleteRes = await request(app)
-      .get('/api/admin/attendance')
+      .get('/api/admin/attendance?page=1&limit=10')
       .set(authHeader(admin.token))
       .expect(200);
     expect(afterDeleteRes.body.records.some((record) => record.id === attendanceId)).toBe(false);
