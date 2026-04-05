@@ -9,12 +9,24 @@ const { verifyTransporter } = require('./utils/mailer');
 
 const PORT = process.env.PORT || 4000;
 
+function shouldVerifySmtpOnStartup() {
+  return process.env.SMTP_VERIFY_ON_STARTUP === 'true';
+}
+
 async function start() {
   try {
     await connectMongo();
     await connectRedis();
-    if (process.env.SMTP_HOST) {
-      await verifyTransporter();
+    if (process.env.SMTP_HOST && shouldVerifySmtpOnStartup()) {
+      try {
+        await verifyTransporter();
+      } catch (error) {
+        logger.warn('SMTP startup verification failed; continuing without blocking API startup', {
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT || 587),
+          error,
+        });
+      }
     }
     const app = require('./app'); // defer app creation until redis is ready
 
