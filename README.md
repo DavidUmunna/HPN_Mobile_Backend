@@ -44,6 +44,21 @@ Seed an admin user:
 SEED_USER_EMAIL=admin@example.com SEED_USER_PASSWORD=changeme123 SEED_USER_ROLE=admin npm run seed:user
 ```
 
+Bulk-register users from JSON or CSV:
+```bash
+npm run bulk:users -- --file ./imports/users.json
+npm run bulk:users -- --file ./imports/users.csv --default-password ChangeMe123 --skip-existing
+npm run bulk:users -- --file ./imports/users.csv --dry-run
+```
+
+Supported import columns:
+```text
+name,email,password,phone,role
+```
+
+Full endpoint reference:
+- `docs/API_REFERENCE.md`
+
 ## Key endpoints (all under `/api`)
 - Auth: `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/change-password`, `POST /auth/forgot-password`, `POST /auth/reset-password`
 - Giving: `GET /giving/categories`, `GET /giving/summary`, `GET /giving/transactions`, `GET /giving/payment-intents/:paymentIntentId/status`, `POST /giving/intent`, `POST /giving/intent/cancel`, `POST /giving/setup-intent`, `POST /giving/webhook`

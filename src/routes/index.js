@@ -8,6 +8,7 @@ const notificationRoutes = require('./notificationRoutes');
 const attendanceRoutes = require('./attendanceRoutes');
 const adminRoutes = require('./adminRoutes');
 const givingRoutes = require('./givingRoutes');
+const supportRoutes = require('./supportRoutes');
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/admin', adminRoutes);
 router.use('/giving', givingRoutes);
+router.use('/support-contacts', supportRoutes);
 
 module.exports = router;

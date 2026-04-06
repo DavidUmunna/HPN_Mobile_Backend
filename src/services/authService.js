@@ -66,12 +66,19 @@ function normalizeProfileUpdates(payload = {}) {
   return updates;
 }
 
-async function signup({ name, email, password, phone, role }) {
+async function signup({ name, email, password, phone, address, role }) {
   const existing = await findByEmail(email);
   if (existing) throw new AppError('Email already registered', 409);
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-  const user = await createUser({ name, email, phone, role: role || 'member', passwordHash });
+  const user = await createUser({
+    name,
+    email,
+    phone,
+    address,
+    role: role || 'member',
+    passwordHash,
+  });
   return { user: toSafeUser(user), token: signAuthToken(user) };
 }
 

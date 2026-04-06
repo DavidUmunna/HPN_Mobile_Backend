@@ -63,6 +63,34 @@ describe('Auth routes', () => {
       .expect(200);
   });
 
+  test('admin-created user does not replace active admin session', async () => {
+    await request(app)
+      .post('/api/auth/signup')
+      .send({ email: 'admin-create@example.com', password: 'password123', name: 'Admin Creator', role: 'admin' })
+      .expect(201);
+
+    const adminAgent = request.agent(app);
+
+    await adminAgent
+      .post('/api/auth/admin/login')
+      .send({ email: 'admin-create@example.com', password: 'password123' })
+      .expect(200);
+
+    const createRes = await adminAgent
+      .post('/api/auth/signup')
+      .send({ email: 'created-member@example.com', password: 'password123', name: 'Created Member' })
+      .expect(201);
+
+    expect(createRes.body.user.mustChangePassword).toBe(true);
+
+    const meRes = await adminAgent
+      .get('/api/auth/me')
+      .expect(200);
+
+    expect(meRes.body.user.email).toBe('admin-create@example.com');
+    expect(meRes.body.user.role).toBe('admin');
+  });
+
   test('complete onboarding updates profile', async () => {
     const signupRes = await request(app)
       .post('/api/auth/signup')

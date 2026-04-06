@@ -22,7 +22,9 @@ function getResetPasswordUiUrl() {
 async function signupController(req, res, next) {
   try {
     const { user, token } = await signup(req.body);
-    req.session.userId = user.id;
+    if (req.session?.role !== 'admin') {
+      req.session.userId = user.id;
+    }
     res.status(201).json({ user, token });
   } catch (err) {
     next(err);

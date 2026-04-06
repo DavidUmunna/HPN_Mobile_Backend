@@ -7,7 +7,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "test": "jest --runInBand",
-    "seed:user": "node scripts/seed-user.js"
+    "seed:user": "node scripts/seed-user.js",
+    "bulk:users": "node scripts/bulk-register-users.js"
   },
   "engines": {
     "node": ">=18"

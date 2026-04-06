@@ -192,6 +192,32 @@ describe('Auth endpoints', () => {
 
     expect(loginRes.body.user.mustChangePassword).toBe(false);
   });
+
+  test('support contacts can be updated by admin and read publicly', async () => {
+    const admin = await signupUser({ email: 'support-admin@example.com', role: 'admin' });
+
+    const updateRes = await request(app)
+      .put('/api/admin/support-contacts')
+      .set(authHeader(admin.token))
+      .send({
+        churchName: 'His Presence Newcastle',
+        mainPhone: '+44 191 111 2222',
+        email: 'office@hpn.example',
+        address: '123 Church Street, Newcastle',
+        departments: [
+          { name: 'Ushering', phone: '+44 191 222 3333', description: 'Sunday service support' },
+          { name: 'Youth Ministry', phone: '+44 191 444 5555', description: '' },
+        ],
+      })
+      .expect(200);
+
+    expect(updateRes.body.support.mainPhone).toBe('+44 191 111 2222');
+    expect(updateRes.body.support.departments).toHaveLength(2);
+
+    const publicRes = await request(app).get('/api/support-contacts').expect(200);
+    expect(publicRes.body.support.churchName).toBe('His Presence Newcastle');
+    expect(publicRes.body.support.departments[0].name).toBe('Ushering');
+  });
 });
 
 describe('Attendance endpoints', () => {
@@ -370,6 +396,12 @@ describe('Notification endpoints', () => {
       .set(authHeader(token))
       .expect(200);
     expect(readRes.body.notification.read).toBe(true);
+
+    const aliasReadAllRes = await request(app)
+      .post('/api/notifications/mark-all-read')
+      .set(authHeader(token))
+      .expect(200);
+    expect(aliasReadAllRes.body.updated).toBeGreaterThanOrEqual(0);
 
     const readAllRes = await request(app)
       .post('/api/notifications/read-all')

@@ -151,6 +151,21 @@ const notificationSchema = Joi.object({
   createdAt: isoDate.required(),
 }).unknown(true);
 
+const supportDepartmentSchema = Joi.object({
+  name: Joi.string().required(),
+  phone: Joi.string().required(),
+  description: Joi.string().allow('').required(),
+}).required();
+
+const supportDirectorySchema = Joi.object({
+  churchName: Joi.string().required(),
+  mainPhone: Joi.string().allow('').required(),
+  email: Joi.string().allow('').required(),
+  address: Joi.string().allow('').required(),
+  departments: Joi.array().items(supportDepartmentSchema).required(),
+  updatedAt: isoDate.optional(),
+}).required();
+
 const pushTokenSchema = Joi.object({
   id: objectId.required(),
   token: Joi.string().required(),
@@ -239,6 +254,27 @@ describe('Contract: auth', () => {
 
     assertSchema(Joi.object({ user: userSchema.required() }).required(), changeRes.body);
     expect(changeRes.body.user.mustChangePassword).toBe(false);
+  });
+
+  test('support contacts contracts', async () => {
+    const admin = await signupUser({ email: makeEmail('support-admin'), role: 'admin' });
+
+    const updateRes = await request(app)
+      .put('/api/admin/support-contacts')
+      .set(authHeader(admin.token))
+      .send({
+        churchName: 'His Presence Newcastle',
+        mainPhone: '+44 191 111 2222',
+        email: 'office@hpn.example',
+        address: '123 Church Street, Newcastle',
+        departments: [{ name: 'Ushering', phone: '+44 191 222 3333', description: 'Front desk' }],
+      })
+      .expect(200);
+
+    assertSchema(Joi.object({ support: supportDirectorySchema }).required(), updateRes.body);
+
+    const getRes = await request(app).get('/api/support-contacts').expect(200);
+    assertSchema(Joi.object({ support: supportDirectorySchema }).required(), getRes.body);
   });
 
   test('attendance management contracts', async () => {
@@ -475,6 +511,12 @@ describe('Contract: notifications', () => {
       .set(authHeader(token))
       .expect(200);
     assertSchema(Joi.object({ updated: Joi.number().required() }).required(), readAllRes.body);
+
+    const aliasReadAllRes = await request(app)
+      .post('/api/notifications/mark-all-read')
+      .set(authHeader(token))
+      .expect(200);
+    assertSchema(Joi.object({ updated: Joi.number().required() }).required(), aliasReadAllRes.body);
 
     const unregisterRes = await request(app)
       .delete('/api/notifications/push-tokens')

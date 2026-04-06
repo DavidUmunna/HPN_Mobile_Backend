@@ -21,6 +21,7 @@ const router = express.Router();
 
 router.get('/', requireAuth, listNotificationsController);
 router.post('/:id/read', requireAuth, markReadController);
+router.post('/mark-all-read', requireAuth, markAllReadController);
 router.post('/read-all', requireAuth, markAllReadController);
 router.post('/push-tokens', requireAuth, validate(registerPushTokenSchema), registerPushTokenController);
 router.delete('/push-tokens', requireAuth, validate(unregisterPushTokenSchema), unregisterPushTokenController);
