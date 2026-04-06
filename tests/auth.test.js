@@ -33,12 +33,34 @@ describe('Auth routes', () => {
       .send({ email: 'test@example.com', password: 'password123', name: 'Tester' })
       .expect(201);
     expect(signupRes.body.user.email).toBe('test@example.com');
+    expect(signupRes.body.user.mustChangePassword).toBe(true);
 
     const meRes = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${signupRes.body.token}`)
       .expect(200);
     expect(meRes.body.user.email).toBe('test@example.com');
+    expect(meRes.body.user.mustChangePassword).toBe(true);
+  });
+
+  test('change password clears forced change flag', async () => {
+    const signupRes = await request(app)
+      .post('/api/auth/signup')
+      .send({ email: 'change-password@example.com', password: 'password123', name: 'Changer' })
+      .expect(201);
+
+    const changeRes = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${signupRes.body.token}`)
+      .send({ currentPassword: 'password123', newPassword: 'newpassword123' })
+      .expect(200);
+
+    expect(changeRes.body.user.mustChangePassword).toBe(false);
+
+    await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'change-password@example.com', password: 'newpassword123' })
+      .expect(200);
   });
 
   test('complete onboarding updates profile', async () => {

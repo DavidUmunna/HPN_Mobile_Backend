@@ -55,6 +55,7 @@ describe('Auth endpoints', () => {
   test('signup, login, me, logout', async () => {
     const signup = await signupUser({ email: 'user1@example.com' });
     expect(signup.user.email).toBe('user1@example.com');
+    expect(signup.user.mustChangePassword).toBe(true);
 
     const loginRes = await request(app)
       .post('/api/auth/login')
@@ -68,6 +69,7 @@ describe('Auth endpoints', () => {
       .set(authHeader(loginRes.body.token))
       .expect(200);
     expect(meRes.body.user.email).toBe('user1@example.com');
+    expect(meRes.body.user.mustChangePassword).toBe(true);
 
     await request(app)
       .post('/api/auth/logout')
@@ -101,6 +103,7 @@ describe('Auth endpoints', () => {
     expect(listRes.body.records.find((record) => record.id === attendanceId)?.userName).toBe(
       'Attendance Member'
     );
+    expect(listRes.body.records.find((record) => record.id === attendanceId)?.isNewMember).toBe(true);
 
     const detailRes = await request(app)
       .get(`/api/admin/attendance/${attendanceId}`)
@@ -108,6 +111,8 @@ describe('Auth endpoints', () => {
       .expect(200);
     expect(detailRes.body.record.id).toBe(attendanceId);
     expect(detailRes.body.record.userName).toBe('Attendance Member');
+    expect(detailRes.body.record.isNewMember).toBe(true);
+    expect(detailRes.body.record.userRegisteredAt).toBeTruthy();
 
     const summaryRes = await request(app)
       .get('/api/admin/attendance/summary')
@@ -116,6 +121,7 @@ describe('Auth endpoints', () => {
     expect(summaryRes.body.analytics.attendedCount).toBe(1);
     expect(summaryRes.body.analytics.absentCount).toBe(0);
     expect(summaryRes.body.analytics.attendedUsers[0].name).toBe('Attendance Member');
+    expect(summaryRes.body.newMembers.some((record) => record.id === attendanceId)).toBe(true);
 
     const exportRes = await request(app)
       .get('/api/admin/attendance/export')
@@ -166,6 +172,25 @@ describe('Auth endpoints', () => {
       .post('/api/auth/reset-password')
       .send({ token: 'badtoken', password: 'newpassword123' })
       .expect(400);
+  });
+
+  test('authenticated change password updates credentials and clears mustChangePassword', async () => {
+    const signup = await signupUser({ email: 'change-me@example.com' });
+
+    const changeRes = await request(app)
+      .post('/api/auth/change-password')
+      .set(authHeader(signup.token))
+      .send({ currentPassword: 'password123', newPassword: 'newpassword123' })
+      .expect(200);
+
+    expect(changeRes.body.user.mustChangePassword).toBe(false);
+
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'change-me@example.com', password: 'newpassword123' })
+      .expect(200);
+
+    expect(loginRes.body.user.mustChangePassword).toBe(false);
   });
 });
 
@@ -479,6 +504,7 @@ describe('Admin endpoints', () => {
       .set(authHeader(admin.token))
       .expect(200);
     expect(attendanceRes.body.totalCheckIns).toBeDefined();
+    expect(Array.isArray(attendanceRes.body.newMembers)).toBe(true);
 
     const eventsRes = await request(app)
       .get('/api/admin/events/summary')

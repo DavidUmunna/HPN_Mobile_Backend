@@ -40,6 +40,7 @@ function toSafeUser(user) {
     avatarUrl: user.avatarUrl,
     role: user.role,
     isOnboarded: user.isOnboarded,
+    mustChangePassword: user.mustChangePassword === true,
   };
 }
 
@@ -195,6 +196,23 @@ async function resetPasswordWithToken({ token, password }) {
   return toSafeUser(updated);
 }
 
+async function changePassword({ userId, currentPassword, newPassword }) {
+  const user = await findById(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) throw new AppError('Current password is incorrect', 400);
+
+  const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
+  if (isSamePassword) {
+    throw new AppError('New password must be different from your current password', 400);
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  const updated = await updatePassword(user._id, passwordHash);
+  return toSafeUser(updated);
+}
+
 module.exports = {
   signup,
   login,
@@ -204,6 +222,7 @@ module.exports = {
   updateProfile,
   requestPasswordReset,
   resetPasswordWithToken,
+  changePassword,
   toSafeUser,
   buildPasswordResetLink,
 };

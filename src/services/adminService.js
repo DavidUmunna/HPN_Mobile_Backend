@@ -5,6 +5,40 @@ const { AppError } = require('../utils/errors');
 const XLSX = require('xlsx');
 const { buildPagination } = require('../utils/pagination');
 
+const NEW_MEMBER_WINDOW_DAYS = 14;
+
+function normalizeDate(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isNewMemberUser(user) {
+  if (!user || typeof user !== 'object' || Array.isArray(user)) return false;
+  if (user.role !== 'member') return false;
+
+  const createdAt = normalizeDate(user.createdAt);
+  if (!createdAt) return false;
+
+  const windowStart = Date.now() - NEW_MEMBER_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  return createdAt.getTime() >= windowStart;
+}
+
+function buildNewMemberRecords(records, limit = 5) {
+  const seenUserIds = new Set();
+
+  return records
+    .map(toAttendanceRecord)
+    .filter((record) => {
+      if (!record.isNewMember || !record.userId || seenUserIds.has(record.userId)) {
+        return false;
+      }
+      seenUserIds.add(record.userId);
+      return true;
+    })
+    .slice(0, limit);
+}
+
 function buildAttendanceAnalyticsLabel(record) {
   if (!record?.timestamp) return null;
   const date = new Date(record.timestamp);
@@ -32,14 +66,17 @@ function toAttendanceRecord(record) {
     record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
       ? record.userId
       : null;
+  const registeredAt = normalizeDate(populatedUser?.createdAt);
 
   return {
     id: record._id.toString(),
     userId: populatedUser?._id?.toString?.() ?? record.userId?.toString(),
-    userName: populatedUser?.name || undefined,
+    userName: populatedUser?.name || populatedUser?.email || undefined,
     timestamp: record.timestamp,
     day: record.day,
     location: record.location,
+    userRegisteredAt: registeredAt ? registeredAt.toISOString() : undefined,
+    isNewMember: isNewMemberUser(populatedUser),
     dependents: Array.isArray(record.dependents)
       ? record.dependents.map((dependent) => ({
           id: dependent.dependentId?.toString(),
@@ -63,11 +100,10 @@ async function listUsers() {
 
 async function attendanceSummary() {
   const total = await Attendance.countDocuments();
-  const latest = await Attendance.find()
-    .populate('userId', 'name')
-    .sort({ timestamp: -1 })
-    .limit(5)
-    .lean();
+  const [latest, recentAttendance] = await Promise.all([
+    Attendance.find().populate('userId', 'name email role createdAt').sort({ timestamp: -1 }).limit(5).lean(),
+    Attendance.find().populate('userId', 'name email role createdAt').sort({ timestamp: -1 }).limit(50).lean(),
+  ]);
 
   const eligibleUsers = await User.find({ role: { $in: ['member', 'staff'] } })
     .sort({ name: 1, email: 1 })
@@ -109,6 +145,7 @@ async function attendanceSummary() {
   return {
     totalCheckIns: total,
     recent: latest.map(toAttendanceRecord),
+    newMembers: buildNewMemberRecords(recentAttendance),
     analytics,
   };
 }
@@ -118,7 +155,7 @@ async function listAttendanceRecords({ page, limit } = {}) {
   const [totalRecords, records] = await Promise.all([
     Attendance.countDocuments(),
     Attendance.find()
-      .populate('userId', 'name')
+      .populate('userId', 'name email role createdAt')
       .sort({ timestamp: -1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
@@ -138,7 +175,9 @@ async function listAttendanceRecords({ page, limit } = {}) {
 
 async function getAttendanceRecord(attendanceId) {
   try {
-    const record = await Attendance.findById(attendanceId).populate('userId', 'name').lean();
+    const record = await Attendance.findById(attendanceId)
+      .populate('userId', 'name email role createdAt')
+      .lean();
     if (!record) throw new AppError('Attendance record not found', 404);
     return toAttendanceRecord(record);
   } catch (err) {

@@ -46,6 +46,23 @@ const resetPasswordSchema = Joi.object({
   return value;
 });
 
+const changePasswordSchema = Joi.object({
+  body: Joi.object({
+    currentPassword: Joi.string().min(8).required(),
+    newPassword: Joi.string().min(8).required(),
+  })
+    .required()
+    .custom((value, helpers) => {
+      if (value.currentPassword === value.newPassword) {
+        return helpers.message('New password must be different from your current password.');
+      }
+
+      return value;
+    }),
+  params: Joi.object().unknown(true),
+  query: Joi.object().unknown(true),
+});
+
 const updateProfileSchema = Joi.object({
   body: Joi.object({
     name: Joi.string().min(2).max(100).optional(),
@@ -68,5 +85,6 @@ module.exports = {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
   updateProfileSchema,
 };

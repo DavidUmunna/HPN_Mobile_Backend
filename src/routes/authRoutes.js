@@ -8,6 +8,7 @@ const {
   updateMeController,
   forgotPasswordController,
   resetPasswordController,
+  changePasswordController,
   resetPasswordPageController,
 } = require('../controllers/authController');
 const { validate } = require('../middlewares/validate');
@@ -16,6 +17,7 @@ const {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
   updateProfileSchema,
 } = require('../validations/authValidation');
 const { loginLimiter } = require('../middlewares/rateLimiter');
@@ -29,6 +31,7 @@ router.post('/admin/login', loginLimiter, validate(loginSchema), adminLoginContr
 router.post('/logout', requireAuth, logoutController);
 router.get('/me', requireAuth, meController);
 router.patch('/me', requireAuth, validate(updateProfileSchema), updateMeController);
+router.post('/change-password', requireAuth, validate(changePasswordSchema), changePasswordController);
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPasswordController);
 router.get('/reset-password', resetPasswordPageController);
 router.post('/reset-password', loginLimiter,validate(resetPasswordSchema), resetPasswordController);

@@ -8,6 +8,7 @@ const {
   updateProfile,
   requestPasswordReset,
   resetPasswordWithToken,
+  changePassword,
   buildPasswordResetLink,
 } = require('../services/authService');
 
@@ -105,6 +106,20 @@ async function resetPasswordController(req, res, next) {
   }
 }
 
+async function changePasswordController(req, res, next) {
+  try {
+    const user = await changePassword({
+      userId: req.session.userId,
+      currentPassword: req.body.currentPassword,
+      newPassword: req.body.newPassword,
+    });
+
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
 function resetPasswordPageController(req, res) {
   const token = req.query.token;
   if (!token) {
@@ -130,5 +145,6 @@ module.exports = {
   updateMeController,
   forgotPasswordController,
   resetPasswordController,
+  changePasswordController,
   resetPasswordPageController,
 };

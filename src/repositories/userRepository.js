@@ -44,7 +44,12 @@ async function setResetToken(userId, { tokenHash, expiresAt }) {
 async function updatePassword(userId, passwordHash) {
   return User.findByIdAndUpdate(
     userId,
-    { passwordHash, resetPasswordTokenHash: null, resetPasswordExpiresAt: null },
+    {
+      passwordHash,
+      mustChangePassword: false,
+      resetPasswordTokenHash: null,
+      resetPasswordExpiresAt: null,
+    },
     { new: true }
   );
 }

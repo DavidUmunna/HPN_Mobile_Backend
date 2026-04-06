@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, trim: true },
     role: { type: String, enum: ['member', 'staff', 'admin'], default: 'member' },
     isOnboarded: { type: Boolean, default: false },
+    mustChangePassword: { type: Boolean, default: true },
     dependents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Dependent' }],
     stripeCustomerId: { type: String, trim: true },
     resetPasswordTokenHash: { type: String, trim: true },

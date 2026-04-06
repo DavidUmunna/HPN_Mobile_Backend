@@ -52,6 +52,7 @@ const userSchema = Joi.object({
   phone: optionalText.optional(),
   role: Joi.string().valid('member', 'staff', 'admin').required(),
   isOnboarded: Joi.boolean().optional(),
+  mustChangePassword: Joi.boolean().optional(),
 }).unknown(true);
 
 const authResponseSchema = Joi.object({
@@ -81,6 +82,8 @@ const attendanceSchema = Joi.object({
   }).required(),
   userId: objectId.required(),
   userName: optionalText.optional(),
+  userRegisteredAt: optionalIso.optional(),
+  isNewMember: Joi.boolean().optional(),
   dependents: Joi.array()
     .items(
       Joi.object({
@@ -206,6 +209,7 @@ describe('Contract: auth', () => {
   test('signup, login, me, logout', async () => {
     const signup = await signupUser({ email: makeEmail('auth') });
     assertSchema(authResponseSchema, signup);
+    expect(signup.user.mustChangePassword).toBe(true);
 
     const loginRes = await request(app)
       .post('/api/auth/login')
@@ -222,6 +226,19 @@ describe('Contract: auth', () => {
       .post('/api/auth/logout')
       .set(authHeader(loginRes.body.token))
       .expect(204);
+  });
+
+  test('change-password contract returns updated user payload', async () => {
+    const signup = await signupUser({ email: makeEmail('change-password') });
+
+    const changeRes = await request(app)
+      .post('/api/auth/change-password')
+      .set(authHeader(signup.token))
+      .send({ currentPassword: 'password123', newPassword: 'newpassword123' })
+      .expect(200);
+
+    assertSchema(Joi.object({ user: userSchema.required() }).required(), changeRes.body);
+    expect(changeRes.body.user.mustChangePassword).toBe(false);
   });
 
   test('attendance management contracts', async () => {
@@ -595,6 +612,7 @@ describe('Contract: admin', () => {
       Joi.object({
         totalCheckIns: Joi.number().required(),
         recent: Joi.array().items(attendanceSchema).required(),
+        newMembers: Joi.array().items(attendanceSchema).required(),
         analytics: Joi.object({
           attendanceLabel: Joi.alternatives().try(Joi.string(), Joi.valid(null)).required(),
           totalEligibleUsers: Joi.number().required(),
