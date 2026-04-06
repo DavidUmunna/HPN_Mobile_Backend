@@ -1,4 +1,5 @@
 const { Console } = require('winston/lib/winston/transports');
+const { findById } = require('../repositories/userRepository');
 const {
   signup,
   login,
@@ -22,7 +23,14 @@ function getResetPasswordUiUrl() {
 async function signupController(req, res, next) {
   try {
     const { user, token } = await signup(req.body);
-    if (req.session?.role !== 'admin') {
+    let preserveAdminSession = false;
+
+    if (req.session?.userId) {
+      const sessionUser = await findById(req.session.userId);
+      preserveAdminSession = sessionUser?.role === 'admin';
+    }
+
+    if (!preserveAdminSession) {
       req.session.userId = user.id;
     }
     res.status(201).json({ user, token });
