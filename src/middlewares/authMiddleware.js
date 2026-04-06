@@ -31,8 +31,8 @@ async function requireAdmin(req, _res, next) {
   console.log(req.session)
   console.log(req.session.userId)
   const userId = req.session.userId;
-
   const user = await findById(userId);
+  console.log('user found for admin check:', user);
   console.log('Admin check for user:', user);
   if (!user || user.role !== 'admin') return next(new AppError('Forbidden', 403));
   req.user = user;
