@@ -1,3 +1,8 @@
+// Polyfill globalThis.crypto for MongoDB driver v6 (Mongoose 9) on Node < 19
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = require('crypto').webcrypto;
+}
+
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
