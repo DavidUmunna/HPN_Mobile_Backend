@@ -31,7 +31,8 @@
     "resend": "^6.10.0",
     "stripe": "^16.9.0",
     "winston": "^3.19.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "crypto":"1.0.1"
   },
   "devDependencies": {
     "jest": "^30.2.0",
