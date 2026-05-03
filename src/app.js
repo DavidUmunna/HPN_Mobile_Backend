@@ -17,6 +17,7 @@ app.use(helmet());
 const origins=[process.env.CLIENT_ORIGIN, 
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://app.hispresencenewcastle.org.uk',
   "https://hpn-admin-production.up.railway.app",
   'http://192.168.113.206:4000'].filter(Boolean);
 app.use(
