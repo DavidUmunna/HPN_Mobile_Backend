@@ -34,6 +34,8 @@ function toSafeUser(user) {
   return {
     id: user._id.toString(),
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     name: user.name,
     phone: user.phone,
     address: user.address,
@@ -46,6 +48,8 @@ function toSafeUser(user) {
 
 function normalizeProfileUpdates(payload = {}) {
   const updates = {};
+  if (typeof payload.firstName === 'string') updates.firstName = payload.firstName;
+  if (typeof payload.lastName === 'string') updates.lastName = payload.lastName;
   if (typeof payload.name === 'string') updates.name = payload.name;
   if (typeof payload.phone === 'string') updates.phone = payload.phone;
   if (typeof payload.email === 'string') updates.email = payload.email;
@@ -143,6 +147,8 @@ async function updateProfile({ userId, updates }) {
     }
   }
 
+  if (normalized.firstName !== undefined) user.firstName = normalized.firstName;
+  if (normalized.lastName !== undefined) user.lastName = normalized.lastName;
   if (normalized.name !== undefined) user.name = normalized.name;
   if (normalized.phone !== undefined) user.phone = normalized.phone;
   if (normalized.address !== undefined) user.address = normalized.address;

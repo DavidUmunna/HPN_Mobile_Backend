@@ -16,6 +16,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 const origins=[process.env.CLIENT_ORIGIN, 
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
   'https://app.hispresencenewcastle.org.uk',
   'https://hpnnginxgateway-production.up.railway.app',

@@ -10,13 +10,12 @@ const {
   deleteUser,
 } = require('../services/adminService');
 
-async function listUsersController(_req, res, next) {
+async function listUsersController(req, res, next) {
   try {
-    const users = await listUsers();
-    res.json({ users });
+    const result = await listUsers({ page: req.query.page, limit: req.query.limit });
+    res.json(result);
   } catch (err) {
     next(err);
-    console.log("attendance summary error",err)
   }
 }
 

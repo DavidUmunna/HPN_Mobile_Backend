@@ -10,7 +10,8 @@ const { signup } = require('../src/services/authService');
 async function main() {
   const email = (process.env.SEED_USER_EMAIL || '').trim().toLowerCase();
   const password = (process.env.SEED_USER_PASSWORD || '').trim();
-  const name = (process.env.SEED_USER_NAME || 'Seed User').trim();
+  const firstName = (process.env.SEED_USER_FIRST_NAME || 'Seed').trim();
+  const lastName = (process.env.SEED_USER_LAST_NAME || 'User').trim();
   const phone = (process.env.SEED_USER_PHONE || '').trim() || undefined;
   const role = (process.env.SEED_USER_ROLE || 'member').trim().toLowerCase();
 
@@ -19,7 +20,7 @@ async function main() {
   }
 
   await connectMongo();
-  const result = await signup({ email, password, name, phone, role });
+  const result = await signup({ email, password, firstName, lastName, phone, role });
   console.log(`Created ${result.user.email} with role ${result.user.role}`);
 }
 

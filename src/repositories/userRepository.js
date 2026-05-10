@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
 async function createUser(userData) {
@@ -10,8 +11,9 @@ async function findByEmail(email) {
 }
 
 async function findById(id) {
-  const user=await User.findById(id);
-  return user
+  if (!mongoose.Types.ObjectId.isValid(id)) return null;
+  const user = await User.findById(new mongoose.Types.ObjectId(id));
+  return user;
 }
 
 async function findByResetTokenHash(tokenHash) {
@@ -22,7 +24,15 @@ async function findByResetTokenHash(tokenHash) {
 }
 
 async function listAll() {
-  return User.find({}).lean();
+  return User.find({}).sort({ createdAt: -1 }).lean();
+}
+
+async function listPaginated({ skip, limit }) {
+  const [totalRecords, users] = await Promise.all([
+    User.countDocuments(),
+    User.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+  ]);
+  return { totalRecords, users };
 }
 
 async function listUserIds() {
@@ -55,7 +65,7 @@ async function updatePassword(userId, passwordHash) {
 }
 
 async function findByIds(ids) {
-  return User.find({ _id: { $in: ids } }).select('name').lean();
+  return User.find({ _id: { $in: ids } }).select('firstName lastName name').lean();
 }
 
 module.exports = {
@@ -64,6 +74,7 @@ module.exports = {
   findById,
   findByResetTokenHash,
   listAll,
+  listPaginated,
   listUserIds,
   updateStripeCustomerId,
   setResetToken,

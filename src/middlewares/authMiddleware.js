@@ -29,7 +29,8 @@ async function requireAdmin(req, _res, next) {
   if (!req.session || !req.session.userId) return next(new AppError('Unauthorized', 401));
   const userId = req.session.userId;
   const user = await findById(userId);
-  if (!user || user.role !== 'admin') return next(new AppError('Forbidden', 403));
+ 
+  if (!user || user.role !== 'admin') return next(new AppError('Forbidden error', 403));
   req.user = user;
   return next();
 }

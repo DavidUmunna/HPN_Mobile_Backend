@@ -4,6 +4,7 @@ const Attendance = require('../models/Attendance');
 const { AppError } = require('../utils/errors');
 const XLSX = require('xlsx');
 const { buildPagination } = require('../utils/pagination');
+const { listAll, listPaginated } = require('../repositories/userRepository');
 
 const NEW_MEMBER_WINDOW_DAYS = 14;
 
@@ -55,6 +56,8 @@ function buildAttendanceAnalyticsLabel(record) {
 function toAttendanceAnalyticsUser(user) {
   return {
     id: user._id.toString(),
+    firstName: user.firstName,
+    lastName: user.lastName,
     name: user.name || user.email,
     email: user.email,
     role: user.role,
@@ -71,6 +74,8 @@ function toAttendanceRecord(record) {
   return {
     id: record._id.toString(),
     userId: populatedUser?._id?.toString?.() ?? record.userId?.toString(),
+    userFirstName: populatedUser?.firstName,
+    userLastName: populatedUser?.lastName,
     userName: populatedUser?.name || populatedUser?.email || undefined,
     timestamp: record.timestamp,
     day: record.day,
@@ -87,26 +92,37 @@ function toAttendanceRecord(record) {
   };
 }
 
-async function listUsers() {
-  const users = await User.find().sort({ createdAt: -1 }).lean();
-  return users.map((u) => ({
-    id: u._id.toString(),
-    email: u.email,
-    name: u.name,
-    role: u.role,
-    createdAt: u.createdAt,
-  }));
+async function listUsers({ page, limit } = {}) {
+  const pagination = buildPagination({ page, limit });
+  const { totalRecords, users } = await listPaginated({ skip: pagination.skip, limit: pagination.limit });
+  return {
+    users: users.map((u) => ({
+      id: u._id.toString(),
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      name: u.name,
+      role: u.role,
+      createdAt: u.createdAt,
+    })),
+    pagination: {
+      page: pagination.page,
+      limit: pagination.limit,
+      totalRecords,
+      totalPages: Math.max(Math.ceil(totalRecords / pagination.limit), 1),
+    },
+  };
 }
 
 async function attendanceSummary() {
   const total = await Attendance.countDocuments();
   const [latest, recentAttendance] = await Promise.all([
-    Attendance.find().populate('userId', 'name email role createdAt').sort({ timestamp: -1 }).limit(5).lean(),
-    Attendance.find().populate('userId', 'name email role createdAt').sort({ timestamp: -1 }).limit(50).lean(),
+    Attendance.find().populate('userId', 'firstName lastName name email role createdAt').sort({ timestamp: -1 }).limit(5).lean(),
+    Attendance.find().populate('userId', 'firstName lastName name email role createdAt').sort({ timestamp: -1 }).limit(50).lean(),
   ]);
 
   const eligibleUsers = await User.find({ role: { $in: ['member', 'staff'] } })
-    .sort({ name: 1, email: 1 })
+    .sort({ firstName: 1, lastName: 1, name: 1, email: 1 })
     .lean();
 
   const latestRecord = latest[0] || null;
@@ -121,7 +137,7 @@ async function attendanceSummary() {
 
   if (latestRecord?.attendanceDateKey) {
     const recordsForLatestDay = await Attendance.find({ attendanceDateKey: latestRecord.attendanceDateKey })
-      .populate('userId', 'name email role')
+      .populate('userId', 'firstName lastName name email role')
       .lean();
 
     const attendedUsers = recordsForLatestDay
@@ -155,7 +171,7 @@ async function listAttendanceRecords({ page, limit } = {}) {
   const [totalRecords, records] = await Promise.all([
     Attendance.countDocuments(),
     Attendance.find()
-      .populate('userId', 'name email role createdAt')
+      .populate('userId', 'firstName lastName name email role createdAt')
       .sort({ timestamp: -1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
@@ -176,7 +192,7 @@ async function listAttendanceRecords({ page, limit } = {}) {
 async function getAttendanceRecord(attendanceId) {
   try {
     const record = await Attendance.findById(attendanceId)
-      .populate('userId', 'name email role createdAt')
+      .populate('userId', 'firstName lastName name email role createdAt')
       .lean();
     if (!record) throw new AppError('Attendance record not found', 404);
     return toAttendanceRecord(record);
@@ -198,10 +214,18 @@ async function deleteAttendanceRecord(attendanceId) {
 }
 
 async function exportAttendanceWorkbook() {
-  const records = await Attendance.find().populate('userId', 'name').sort({ timestamp: -1 }).lean();
+  const records = await Attendance.find().populate('userId', 'firstName lastName name').sort({ timestamp: -1 }).lean();
   const rows = records.map((record) => ({
     id: record._id.toString(),
     userId: record.userId?.toString() || '',
+    userFirstName:
+      record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
+        ? record.userId.firstName || ''
+        : '',
+    userLastName:
+      record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
+        ? record.userId.lastName || ''
+        : '',
     userName:
       record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
         ? record.userId.name || ''
@@ -242,7 +266,7 @@ async function updateUserEmail({ userId, newEmail }) {
     user.email = email;
     await user.save();
 
-    return { id: user._id.toString(), email: user.email, name: user.name, role: user.role };
+    return { id: user._id.toString(), email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name, role: user.role };
   } catch (err) {
     if (err?.name === 'CastError') throw new AppError('Invalid user id', 400);
     if (err?.code === 11000) throw new AppError('Email already in use', 409);

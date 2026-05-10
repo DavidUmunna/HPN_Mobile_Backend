@@ -142,6 +142,8 @@ async function listPrayingUsers({ prayerId, limit = 20, offset = 0 }) {
     count: total,
     users: users.map((user) => ({
       id: user._id.toString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
       name: user.name || 'Anonymous',
     })),
   };
