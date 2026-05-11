@@ -41,7 +41,10 @@ async function signupController(req, res, next) {
 async function loginController(req, res, next) {
   try {
     const { user, token } = await login({ ...req.body, session: req.session });
-    res.json({ user, token });
+    req.session.save((err) => {
+      if (err) return next(err);
+      res.json({ user, token });
+    });
   } catch (err) {
     next(err);
   }

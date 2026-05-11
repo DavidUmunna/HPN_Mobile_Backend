@@ -11,7 +11,7 @@ const eventSchema = new mongoose.Schema(
     maxAttendees: { type: Number },
     attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('Event', eventSchema);

@@ -30,7 +30,7 @@ const attendanceSchema = new mongoose.Schema(
       longitude: { type: Number, required: true },
     },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 attendanceSchema.index(

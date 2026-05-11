@@ -18,7 +18,7 @@ const supportDirectorySchema = new mongoose.Schema(
     address: { type: String, trim: true, default: '' },
     departments: { type: [supportDepartmentSchema], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('SupportDirectory', supportDirectorySchema);

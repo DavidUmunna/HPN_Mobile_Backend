@@ -9,7 +9,7 @@ const prayerRequestSchema = new mongoose.Schema(
     prayedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     commentsCount: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('PrayerRequest', prayerRequestSchema);

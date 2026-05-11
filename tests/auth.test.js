@@ -64,10 +64,9 @@ describe('Auth routes', () => {
   });
 
   test('admin-created user does not replace active admin session', async () => {
-    await request(app)
-      .post('/api/auth/signup')
-      .send({ email: 'admin-create@example.com', password: 'password123', name: 'Admin Creator', role: 'admin' })
-      .expect(201);
+    // Seed admin directly — signup route no longer accepts role (security fix)
+    const passwordHash = await bcrypt.hash('password123', 10);
+    await User.create({ email: 'admin-create@example.com', passwordHash, name: 'Admin Creator', role: 'admin' });
 
     const adminAgent = request.agent(app);
 

@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
     resetPasswordTokenHash: { type: String, trim: true },
     resetPasswordExpiresAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 userSchema.pre('validate', function normalizeLegacyTimestamps() {

@@ -7,7 +7,7 @@ const prayerCommentSchema = new mongoose.Schema(
     authorName: { type: String },
     body: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('PrayerComment', prayerCommentSchema);

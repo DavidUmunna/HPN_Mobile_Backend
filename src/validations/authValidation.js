@@ -7,7 +7,6 @@ const signupSchema = Joi.object({
     password: Joi.string().min(8).required(),
     phone: Joi.string().optional(),
     address: Joi.string().max(300).allow('').optional(),
-    role: Joi.string().valid('member', 'staff', 'admin').optional(),
   }).required(),
   params: Joi.object().unknown(true),
   query: Joi.object().unknown(true),

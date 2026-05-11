@@ -10,7 +10,7 @@ const syncItemSchema = new mongoose.Schema(
     conflict: { type: Boolean, default: false },
     conflictReason: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 syncItemSchema.index({ userId: 1, key: 1 }, { unique: true });

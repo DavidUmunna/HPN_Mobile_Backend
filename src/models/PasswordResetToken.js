@@ -7,7 +7,7 @@ const passwordResetTokenSchema = new mongoose.Schema(
     expiresAt: { type: Date, required: true },
     used: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 // TTL index to automatically purge expired tokens

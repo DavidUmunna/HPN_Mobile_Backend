@@ -8,7 +8,7 @@ const pushTokenSchema = new mongoose.Schema(
     enabled: { type: Boolean, default: true },
     lastSeenAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 pushTokenSchema.index({ userId: 1, token: 1 }, { unique: true });

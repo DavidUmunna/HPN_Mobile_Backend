@@ -70,7 +70,7 @@ function normalizeProfileUpdates(payload = {}) {
   return updates;
 }
 
-async function signup({ name, email, password, phone, address, role }) {
+async function signup({ name, email, password, phone, address }) {
   const existing = await findByEmail(email);
   if (existing) throw new AppError('Email already registered', 409);
 
@@ -80,7 +80,7 @@ async function signup({ name, email, password, phone, address, role }) {
     email,
     phone,
     address,
-    role: role || 'member',
+    role: 'member',
     passwordHash,
   });
   return { user: toSafeUser(user), token: signAuthToken(user) };

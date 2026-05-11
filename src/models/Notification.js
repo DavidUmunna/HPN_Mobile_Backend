@@ -8,7 +8,7 @@ const notificationSchema = new mongoose.Schema(
     type: { type: String, enum: ['event', 'prayer', 'giving', 'general'], default: 'general' },
     read: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('Notification', notificationSchema);

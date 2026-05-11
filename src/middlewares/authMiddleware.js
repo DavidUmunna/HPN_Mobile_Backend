@@ -13,8 +13,9 @@ async function requireAuth(req, _res, next) {
       const token = header.slice(7);
       const payload = verifyAuthToken(token);
       if (payload?.sub) {
-        req.session = req.session || {};
-        req.session.userId = payload.sub; // allow downstream reuse
+        // Make userId available to all controllers for this request (not persisted to store)
+        req.session.userId = payload.sub;
+        req.user = { id: payload.sub, role: payload.role };
         return next();
       }
     }
@@ -26,10 +27,10 @@ async function requireAuth(req, _res, next) {
 }
 
 async function requireAdmin(req, _res, next) {
-  if (!req.session || !req.session.userId) return next(new AppError('Unauthorized', 401));
-  const userId = req.session.userId;
+  const userId = req.session?.userId || req.user?.id;
+  if (!userId) return next(new AppError('Unauthorized', 401));
   const user = await findById(userId);
- 
+
   if (!user || user.role !== 'admin') return next(new AppError('Forbidden error', 403));
   req.user = user;
   return next();

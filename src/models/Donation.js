@@ -18,7 +18,7 @@ const donationSchema = new mongoose.Schema(
     subscriptionId: { type: String, index: true },
     invoiceId: { type: String, index: true },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('Donation', donationSchema);

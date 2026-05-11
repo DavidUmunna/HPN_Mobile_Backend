@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="62" failures="9" errors="0" time="7.759">
+  <testsuite name="Payment workflow" errors="0" failures="0" skipped="0" timestamp="2026-05-11T10:26:39" time="4.723" tests="4">
+    <testcase classname="Payment workflow creates a one-time payment intent and records a pending donation" name="Payment workflow creates a one-time payment intent and records a pending donation" time="1.539">
+    </testcase>
+    <testcase classname="Payment workflow cancels a pending payment intent and marks the donation cancelled" name="Payment workflow cancels a pending payment intent and marks the donation cancelled" time="0.309">
+    </testcase>
+    <testcase classname="Payment workflow payment intent status endpoint updates a pending donation to succeeded" name="Payment workflow payment intent status endpoint updates a pending donation to succeeded" time="0.175">
+    </testcase>
+    <testcase classname="Payment workflow webhook marks a payment intent as succeeded and exposes it in transactions" name="Payment workflow webhook marks a payment intent as succeeded and exposes it in transactions" time="0.157">
+    </testcase>
+  </testsuite>
+  <testsuite name="Security: authentication" errors="0" failures="0" skipped="0" timestamp="2026-05-11T10:26:39" time="5.5" tests="7">
+    <testcase classname="Security: authentication protected routes require auth" name="Security: authentication protected routes require auth" time="0.781">
+    </testcase>
+    <testcase classname="Security: authentication invalid bearer tokens are rejected" name="Security: authentication invalid bearer tokens are rejected" time="0.737">
+    </testcase>
+    <testcase classname="Security: authorization non-admin users cannot access admin endpoints" name="Security: authorization non-admin users cannot access admin endpoints" time="0.533">
+    </testcase>
+    <testcase classname="Security: authorization non-admin users cannot delete notifications" name="Security: authorization non-admin users cannot delete notifications" time="0.144">
+    </testcase>
+    <testcase classname="Security: authorization users cannot delete other users comments" name="Security: authorization users cannot delete other users comments" time="0.317">
+    </testcase>
+    <testcase classname="Security: push tokens invalid Expo tokens are rejected" name="Security: push tokens invalid Expo tokens are rejected" time="0.234">
+    </testcase>
+    <testcase classname="Security: push tokens users cannot unregister tokens they do not own" name="Security: push tokens users cannot unregister tokens they do not own" time="0.245">
+    </testcase>
+  </testsuite>
+  <testsuite name="POST /api/auth/login" errors="0" failures="0" skipped="0" timestamp="2026-05-11T10:26:39" time="5.876" tests="12">
+    <testcase classname="POST /api/auth/login returns 200 and a JWT token on successful login" name="POST /api/auth/login returns 200 and a JWT token on successful login" time="1.491">
+    </testcase>
+    <testcase classname="POST /api/auth/login returns 401 when the password is wrong" name="POST /api/auth/login returns 401 when the password is wrong" time="0.422">
+    </testcase>
+    <testcase classname="POST /api/auth/login returns 401 when the email does not exist" name="POST /api/auth/login returns 401 when the email does not exist" time="0.024">
+    </testcase>
+    <testcase classname="GET /api/auth/me (protected route) returns 401 when no Authorization token is provided" name="GET /api/auth/me (protected route) returns 401 when no Authorization token is provided" time="0.005">
+    </testcase>
+    <testcase classname="GET /api/auth/me (protected route) returns 401 when an expired token is provided" name="GET /api/auth/me (protected route) returns 401 when an expired token is provided" time="0.136">
+    </testcase>
+    <testcase classname="GET /api/auth/me (protected route) returns 401 when a malformed token is provided" name="GET /api/auth/me (protected route) returns 401 when a malformed token is provided" time="0.003">
+    </testcase>
+    <testcase classname="GET /api/auth/me (protected route) returns 200 with user data when a valid token is provided" name="GET /api/auth/me (protected route) returns 200 with user data when a valid token is provided" time="0.199">
+    </testcase>
+    <testcase classname="GET /api/admin/users (admin-only route) returns 401 when no token is provided" name="GET /api/admin/users (admin-only route) returns 401 when no token is provided" time="0.005">
+    </testcase>
+    <testcase classname="GET /api/admin/users (admin-only route) returns 403 when a member role user tries to access an admin route" name="GET /api/admin/users (admin-only route) returns 403 when a member role user tries to access an admin route" time="0.209">
+    </testcase>
+    <testcase classname="GET /api/admin/users (admin-only route) returns 403 when a staff role user tries to access an admin route" name="GET /api/admin/users (admin-only route) returns 403 when a staff role user tries to access an admin route" time="0.331">
+    </testcase>
+    <testcase classname="GET /api/admin/users (admin-only route) returns 200 when an admin user accesses an admin route" name="GET /api/admin/users (admin-only route) returns 200 when an admin user accesses an admin route" time="0.212">
+    </testcase>
+    <testcase classname="POST /api/auth/login — rate limiting returns 429 after exceeding the login attempt limit from the same IP" name="POST /api/auth/login — rate limiting returns 429 after exceeding the login attempt limit from the same IP" time="0.057">
+    </testcase>
+  </testsuite>
+  <testsuite name="Auth routes" errors="0" failures="0" skipped="0" timestamp="2026-05-11T10:26:39" time="5.924" tests="6">
+    <testcase classname="Auth routes signup and fetch profile" name="Auth routes signup and fetch profile" time="1.885">
+    </testcase>
+    <testcase classname="Auth routes change password clears forced change flag" name="Auth routes change password clears forced change flag" time="0.493">
+    </testcase>
+    <testcase classname="Auth routes admin-created user does not replace active admin session" name="Auth routes admin-created user does not replace active admin session" time="0.455">
+    </testcase>
+    <testcase classname="Auth routes complete onboarding updates profile" name="Auth routes complete onboarding updates profile" time="0.142">
+    </testcase>
+    <testcase classname="Auth routes complete onboarding updates profile when legacy timestamp objects exist" name="Auth routes complete onboarding updates profile when legacy timestamp objects exist" time="0.156">
+    </testcase>
+    <testcase classname="Auth routes reset password accepts token from query string" name="Auth routes reset password accepts token from query string" time="0.13">
+    </testcase>
+  </testsuite>
+  <testsuite name="Contract: health" errors="0" failures="4" skipped="0" timestamp="2026-05-11T10:26:39" time="6.876" tests="15">
+    <testcase classname="Contract: health GET /api/health returns html" name="Contract: health GET /api/health returns html" time="0.674">
+    </testcase>
+    <testcase classname="Contract: auth signup, login, me, logout" name="Contract: auth signup, login, me, logout" time="1.233">
+    </testcase>
+    <testcase classname="Contract: auth change-password contract returns updated user payload" name="Contract: auth change-password contract returns updated user payload" time="0.453">
+    </testcase>
+    <testcase classname="Contract: auth support contacts contracts" name="Contract: auth support contacts contracts" time="0.151">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/contracts.test.js:272:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+    <testcase classname="Contract: auth attendance management contracts" name="Contract: auth attendance management contracts" time="0.36">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/contracts.test.js:295:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+    <testcase classname="Contract: auth forgot/reset contracts" name="Contract: auth forgot/reset contracts" time="0.123">
+    </testcase>
+    <testcase classname="Contract: attendance check-in and reads" name="Contract: attendance check-in and reads" time="0.167">
+    </testcase>
+    <testcase classname="Contract: events list/create/get/rsvp" name="Contract: events list/create/get/rsvp" time="0.171">
+    </testcase>
+    <testcase classname="Contract: prayers prayer lifecycle" name="Contract: prayers prayer lifecycle" time="0.198">
+    </testcase>
+    <testcase classname="Contract: notifications personal notifications contract" name="Contract: notifications personal notifications contract" time="0.219">
+    </testcase>
+    <testcase classname="Contract: notifications admin broadcast contract" name="Contract: notifications admin broadcast contract" time="0.243">
+      <failure>ValidationError: &quot;summary&quot; is required</failure>
+    </testcase>
+    <testcase classname="Contract: sync sync contract" name="Contract: sync sync contract" time="0.083">
+    </testcase>
+    <testcase classname="Contract: giving list/summary contracts" name="Contract: giving list/summary contracts" time="0.088">
+    </testcase>
+    <testcase classname="Contract: giving intent/subscription/setup/webhook error contracts" name="Contract: giving intent/subscription/setup/webhook error contracts" time="0.1">
+    </testcase>
+    <testcase classname="Contract: admin admin summary contracts" name="Contract: admin admin summary contracts" time="0.154">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/contracts.test.js:643:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="Health endpoints" errors="0" failures="5" skipped="0" timestamp="2026-05-11T10:26:39" time="7.394" tests="18">
+    <testcase classname="Health endpoints GET /api/health returns html" name="Health endpoints GET /api/health returns html" time="0.659">
+    </testcase>
+    <testcase classname="Auth endpoints signup, login, me, logout" name="Auth endpoints signup, login, me, logout" time="1.356">
+    </testcase>
+    <testcase classname="Auth endpoints attendance admin workflow supports list, detail, export, and delete" name="Auth endpoints attendance admin workflow supports list, detail, export, and delete" time="0.294">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/endpoints.test.js:98:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+    <testcase classname="Auth endpoints admin login honors role" name="Auth endpoints admin login honors role" time="0.506">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/endpoints.test.js:157:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+    <testcase classname="Auth endpoints forgot/reset password endpoints" name="Auth endpoints forgot/reset password endpoints" time="0.145">
+    </testcase>
+    <testcase classname="Auth endpoints authenticated change password updates credentials and clears mustChangePassword" name="Auth endpoints authenticated change password updates credentials and clears mustChangePassword" time="0.471">
+    </testcase>
+    <testcase classname="Auth endpoints support contacts can be updated by admin and read publicly" name="Auth endpoints support contacts can be updated by admin and read publicly" time="0.117">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/endpoints.test.js:212:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+    <testcase classname="Attendance endpoints check-in, list, latest, detail" name="Attendance endpoints check-in, list, latest, detail" time="0.172">
+    </testcase>
+    <testcase classname="Attendance endpoints repeat check-in on the same day updates the existing record" name="Attendance endpoints repeat check-in on the same day updates the existing record" time="0.174">
+    </testcase>
+    <testcase classname="Event endpoints list, create, get, rsvp" name="Event endpoints list, create, get, rsvp" time="0.12">
+    </testcase>
+    <testcase classname="Prayer endpoints prayer flow" name="Prayer endpoints prayer flow" time="0.129">
+    </testcase>
+    <testcase classname="Notification endpoints register/unregister push tokens and list notifications" name="Notification endpoints register/unregister push tokens and list notifications" time="0.125">
+    </testcase>
+    <testcase classname="Notification endpoints admin broadcast, delete, clear" name="Notification endpoints admin broadcast, delete, clear" time="0.177">
+      <failure>Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+Expected: &gt;= 1
+Received:    0
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/endpoints.test.js:434:50)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)</failure>
+    </testcase>
+    <testcase classname="Sync endpoints POST /api/sync" name="Sync endpoints POST /api/sync" time="0.093">
+    </testcase>
+    <testcase classname="Giving endpoints categories, summary, transactions" name="Giving endpoints categories, summary, transactions" time="0.106">
+    </testcase>
+    <testcase classname="Giving endpoints payment intent, subscription, setup intent error when Stripe not configured" name="Giving endpoints payment intent, subscription, setup intent error when Stripe not configured" time="0.098">
+    </testcase>
+    <testcase classname="Giving endpoints webhook returns error without stripe secrets" name="Giving endpoints webhook returns error without stripe secrets" time="0.003">
+    </testcase>
+    <testcase classname="Admin endpoints list users, summaries, update email" name="Admin endpoints list users, summaries, update email" time="0.15">
+      <failure>Error: expected 200 &quot;OK&quot;, got 403 &quot;Forbidden&quot;
+    at Object.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/tests/endpoints.test.js:531:8)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+----
+    at Test._assertStatus (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:309:14)
+    at /Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:365:13
+    at Test._assertFunction (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:342:13)
+    at Test.assert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:195:23)
+    at localAssert (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:138:14)
+    at Server.&lt;anonymous&gt; (/Users/admin/HPN_Mobile_Backend/node_modules/supertest/lib/test.js:152:11)
+    at Object.onceWrapper (node:events:630:28)
+    at Server.emit (node:events:509:20)
+    at emitCloseNT (node:net:2487:8)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

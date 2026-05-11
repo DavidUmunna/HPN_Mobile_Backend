@@ -16,7 +16,7 @@ const givingSchema = new mongoose.Schema(
     paymentIntentId: { type: String },
     paymentMethod: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 givingSchema.index({ paymentIntentId: 1 }, { unique: false, sparse: true });

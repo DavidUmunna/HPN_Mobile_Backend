@@ -6,7 +6,7 @@ const dependentSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     age: { type: Number, required: true, min: 0 },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports = mongoose.model('Dependent', dependentSchema);
