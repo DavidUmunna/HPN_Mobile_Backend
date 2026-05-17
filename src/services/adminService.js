@@ -289,30 +289,34 @@ async function deleteAttendanceRecord(attendanceId) {
 
 async function exportAttendanceWorkbook() {
   const records = await Attendance.find().populate('userId', 'firstName lastName name').sort({ timestamp: -1 }).lean();
-  const rows = records.map((record) => ({
-    id: record._id.toString(),
-    userId: record.userId?.toString() || '',
-    userFirstName:
-      record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
-        ? record.userId.firstName || ''
+  const rows = records.map((record) => {
+    const user = record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
+      ? record.userId
+      : null;
+    const firstName = user?.firstName || '';
+    const lastName = user?.lastName || '';
+    const displayName = user?.name || [firstName, lastName].filter(Boolean).join(' ') || '';
+
+    const AUTO_CHECKOUT_MS = 3.5 * 60 * 60 * 1000;
+    const checkInTime = record.timestamp instanceof Date ? record.timestamp : new Date(record.timestamp);
+    const autoCheckout = new Date(checkInTime.getTime() + AUTO_CHECKOUT_MS);
+    const checkedOutAt = record.checkedOutAt
+      ? (record.checkedOutAt instanceof Date ? record.checkedOutAt.toISOString() : record.checkedOutAt)
+      : (new Date() >= autoCheckout ? autoCheckout.toISOString() : '');
+
+    return {
+      id: record._id.toString(),
+      userId: user?._id?.toString() || record.userId?.toString() || '',
+      name: displayName,
+      checkIn: checkInTime.toISOString(),
+      checkOut: checkedOutAt,
+      day: record.day || '',
+      dependentsCount: Array.isArray(record.dependents) ? record.dependents.length : 0,
+      dependents: Array.isArray(record.dependents)
+        ? record.dependents.map((dependent) => `${dependent.name} (${dependent.age})`).join(', ')
         : '',
-    userLastName:
-      record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
-        ? record.userId.lastName || ''
-        : '',
-    userName:
-      record.userId && typeof record.userId === 'object' && !Array.isArray(record.userId)
-        ? record.userId.name || ''
-        : '',
-    timestamp: record.timestamp instanceof Date ? record.timestamp.toISOString() : record.timestamp,
-    day: record.day || '',
-    latitude: record.location?.latitude ?? '',
-    longitude: record.location?.longitude ?? '',
-    dependentsCount: Array.isArray(record.dependents) ? record.dependents.length : 0,
-    dependents: Array.isArray(record.dependents)
-      ? record.dependents.map((dependent) => `${dependent.name} (${dependent.age})`).join(', ')
-      : '',
-  }));
+    };
+  });
 
   const workbook = XLSX.utils.book_new();
   const worksheet = XLSX.utils.json_to_sheet(rows);
