@@ -17,6 +17,7 @@ const attendanceSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     timestamp: { type: Date, required: true },
     day: { type: String, required: true },
+    checkedOutAt: { type: Date },
     attendanceDateKey: { type: String, required: true },
     dependents: [
       {

@@ -1,9 +1,11 @@
 const {
   createAttendance,
   updateAttendance,
+  checkOutAttendance,
   findByUserAndAttendanceDateKey,
   findLatestForUser,
   findForUser,
+  findForUserPaginated,
   findByIdForUser,
   countAll,
   recent,
@@ -11,6 +13,9 @@ const {
 const { findById } = require('../repositories/userRepository');
 const { listDependentsByUser, replaceDependentsByUser } = require('../repositories/dependentRepository');
 const { AppError } = require('../utils/errors');
+const { buildPagination } = require('../utils/pagination');
+
+const AUTO_CHECKOUT_MS = 3.5 * 60 * 60 * 1000; // 3 hours 30 minutes
 
 function buildAttendanceDateKey(timestamp) {
   const year = timestamp.getFullYear();
@@ -28,9 +33,18 @@ function toAttendanceResponse(record, dependents) {
   const sourceDependents = Array.isArray(record.dependents) && record.dependents.length > 0
     ? record.dependents
     : dependents;
+
+  const checkInTime = record.timestamp instanceof Date ? record.timestamp : new Date(record.timestamp);
+  const autoCheckoutTime = new Date(checkInTime.getTime() + AUTO_CHECKOUT_MS);
+  const now = new Date();
+  const checkedOutAt = record.checkedOutAt
+    ? record.checkedOutAt
+    : (now >= autoCheckoutTime ? autoCheckoutTime : null);
+
   const response = {
     id: record._id.toString(),
     timestamp: record.timestamp,
+    checkedOutAt,
     day: record.day,
     location: record.location,
     userId: record.userId?.toString(),
@@ -107,6 +121,16 @@ async function checkIn({ userId, latitude, longitude, timestamp, dependents }) {
   return { record: toAttendanceResponse(record, dependentsList), created };
 }
 
+async function checkOut(userId) {
+  const now = new Date();
+  const attendanceDateKey = buildAttendanceDateKey(now);
+  const existing = await findByUserAndAttendanceDateKey(userId, attendanceDateKey);
+  if (!existing) throw new AppError('No check-in found for today', 404);
+  if (existing.checkedOutAt) throw new AppError('Already checked out', 409);
+  const updated = await checkOutAttendance(existing._id, now);
+  return toAttendanceResponse(updated);
+}
+
 async function latestForUser(userId) {
   const record = await findLatestForUser(userId);
   if (!record) return null;
@@ -117,9 +141,18 @@ async function latestForUser(userId) {
   return toAttendanceResponse(record, dependents);
 }
 
-async function listForUser(userId) {
-  const records = await findForUser(userId);
-  return records.map(toAttendanceResponse);
+async function listForUser(userId, { page, limit } = {}) {
+  const pagination = buildPagination({ page, limit });
+  const { totalRecords, records } = await findForUserPaginated(userId, pagination);
+  return {
+    records: records.map(toAttendanceResponse),
+    pagination: {
+      page: pagination.page,
+      limit: pagination.limit,
+      totalRecords,
+      totalPages: Math.max(Math.ceil(totalRecords / pagination.limit), 1),
+    },
+  };
 }
 
 async function getAttendance({ attendanceId, userId }) {
@@ -137,4 +170,4 @@ async function summary() {
   };
 }
 
-module.exports = { checkIn, latestForUser, listForUser, getAttendance, summary };
+module.exports = { checkIn, checkOut, latestForUser, listForUser, getAttendance, summary };

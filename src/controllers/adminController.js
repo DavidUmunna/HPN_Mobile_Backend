@@ -12,7 +12,12 @@ const {
 
 async function listUsersController(req, res, next) {
   try {
-    const result = await listUsers({ page: req.query.page, limit: req.query.limit });
+    const result = await listUsers({
+      page: req.query.page,
+      limit: req.query.limit,
+      search: req.query.search,
+      role: req.query.role,
+    });
     res.json(result);
   } catch (err) {
     next(err);

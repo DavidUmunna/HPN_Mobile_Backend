@@ -4,7 +4,7 @@ const Attendance = require('../models/Attendance');
 const { AppError } = require('../utils/errors');
 const XLSX = require('xlsx');
 const { buildPagination } = require('../utils/pagination');
-const { listAll, listPaginated } = require('../repositories/userRepository');
+const { listAll, listPaginated, listPaginatedFiltered } = require('../repositories/userRepository');
 
 const NEW_MEMBER_WINDOW_DAYS = 14;
 
@@ -100,9 +100,14 @@ function toAttendanceRecord(record) {
   };
 }
 
-async function listUsers({ page, limit } = {}) {
+async function listUsers({ page, limit, search, role } = {}) {
   const pagination = buildPagination({ page, limit });
-  const { totalRecords, users } = await listPaginated({ skip: pagination.skip, limit: pagination.limit });
+  const { totalRecords, users } = await listPaginatedFiltered({
+    skip: pagination.skip,
+    limit: pagination.limit,
+    search: search?.trim() || undefined,
+    role: role || undefined,
+  });
   return {
     users: users.map((u) => ({
       id: u._id.toString(),

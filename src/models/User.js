@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     address: { type: String, trim: true },
     avatarUrl: { type: String, trim: true },
+    
     role: { type: String, enum: ['member', 'staff', 'admin'], default: 'member' },
     isOnboarded: { type: Boolean, default: false },
     mustChangePassword: { type: Boolean, default: true },

@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   checkInController,
+  checkOutController,
   latestAttendanceController,
   listAttendanceController,
   getAttendanceController,
@@ -12,6 +13,7 @@ const { checkInSchema } = require('../validations/attendanceValidation');
 const router = express.Router();
 
 router.post('/check-in', requireAuth, validate(checkInSchema), checkInController);
+router.post('/check-out', requireAuth, checkOutController);
 router.get('/latest', requireAuth, latestAttendanceController);
 router.get('/', requireAuth, listAttendanceController);
 router.get('/:id', requireAuth, getAttendanceController);

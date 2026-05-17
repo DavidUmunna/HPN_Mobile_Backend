@@ -1,4 +1,4 @@
-const { checkIn, latestForUser, listForUser, getAttendance } = require('../services/attendanceService');
+const { checkIn, checkOut, latestForUser, listForUser, getAttendance } = require('../services/attendanceService');
 
 async function checkInController(req, res, next) {
   try {
@@ -15,6 +15,15 @@ async function checkInController(req, res, next) {
   }
 }
 
+async function checkOutController(req, res, next) {
+  try {
+    const record = await checkOut(req.session.userId);
+    res.json({ record });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function latestAttendanceController(req, res, next) {
   try {
     const record = await latestForUser(req.session.userId);
@@ -26,8 +35,11 @@ async function latestAttendanceController(req, res, next) {
 
 async function listAttendanceController(req, res, next) {
   try {
-    const records = await listForUser(req.session.userId);
-    res.json({ records });
+    const result = await listForUser(req.session.userId, {
+      page: req.query.page,
+      limit: req.query.limit,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -42,4 +54,4 @@ async function getAttendanceController(req, res, next) {
   }
 }
 
-module.exports = { checkInController, latestAttendanceController, listAttendanceController, getAttendanceController };
+module.exports = { checkInController, checkOutController, latestAttendanceController, listAttendanceController, getAttendanceController };

@@ -35,6 +35,26 @@ async function listPaginated({ skip, limit }) {
   return { totalRecords, users };
 }
 
+async function listPaginatedFiltered({ skip, limit, search, role }) {
+  const filter = {};
+  if (role) filter.role = role;
+  if (search) {
+    const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'i');
+    filter.$or = [
+      { email: regex },
+      { firstName: regex },
+      { lastName: regex },
+      { name: regex },
+    ];
+  }
+  const [totalRecords, users] = await Promise.all([
+    User.countDocuments(filter),
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+  ]);
+  return { totalRecords, users };
+}
+
 async function listUserIds() {
   return User.find({}).select('_id').lean();
 }
@@ -75,6 +95,7 @@ module.exports = {
   findByResetTokenHash,
   listAll,
   listPaginated,
+  listPaginatedFiltered,
   listUserIds,
   updateStripeCustomerId,
   setResetToken,
