@@ -12,6 +12,7 @@ const {
   createPrayerComment,
   findPrayerCommentById,
   deletePrayerCommentById,
+  deleteCommentsByPrayerId,
 } = require('../repositories/prayerCommentRepository');
 const { findById, findByIds } = require('../repositories/userRepository');
 const { AppError } = require('../utils/errors');
@@ -142,6 +143,7 @@ async function deletePrayer({ prayerId, userId }) {
 
   const deleted = await deletePrayerById(prayerId);
   if (!deleted) throw new AppError('Prayer request not found', 404);
+  await deleteCommentsByPrayerId(prayerId);
   return deleted;
 }
 

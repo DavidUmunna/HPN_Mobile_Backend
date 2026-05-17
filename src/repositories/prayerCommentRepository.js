@@ -22,9 +22,14 @@ async function deletePrayerCommentById(commentId) {
   return PrayerComment.findByIdAndDelete(commentId).lean();
 }
 
+async function deleteCommentsByPrayerId(prayerId) {
+  return PrayerComment.deleteMany({ prayerId });
+}
+
 module.exports = {
   listPrayerComments,
   createPrayerComment,
   findPrayerCommentById,
   deletePrayerCommentById,
+  deleteCommentsByPrayerId,
 };
