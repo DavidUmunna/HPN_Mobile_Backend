@@ -19,13 +19,22 @@ async function listUsersController(req, res, next) {
   }
 }
 
-async function attendanceSummaryController(_req, res, next) {
+async function attendanceSummaryController(req, res, next) {
   try {
-    const summary = await attendanceSummary();
+    const summary = await attendanceSummary({
+      recentPage: req.query.recentPage,
+      recentLimit: req.query.recentLimit,
+      newMembersPage: req.query.newMembersPage,
+      newMembersLimit: req.query.newMembersLimit,
+      attendedPage: req.query.attendedPage,
+      attendedLimit: req.query.attendedLimit,
+      absentPage: req.query.absentPage,
+      absentLimit: req.query.absentLimit,
+    });
     res.json(summary);
   } catch (err) {
     next(err);
-    console.log("attendance summary error",err)
+    console.log("attendance summary error", err);
   }
 }
 

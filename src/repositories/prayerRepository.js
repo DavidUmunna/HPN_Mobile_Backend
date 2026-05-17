@@ -1,5 +1,4 @@
 const PrayerRequest = require('../models/PrayerRequest');
-
 async function listPrayers({ category }) {
   const query = {};
   if (category) query.category = category;
@@ -19,6 +18,12 @@ async function updatePrayer(id, update) {
   return PrayerRequest.findByIdAndUpdate(id, update, { new: true }).lean();
 }
 
+async function deletePrayer(id) {
+  const deleted = await PrayerRequest.findByIdAndDelete(id).lean();
+  if (!deleted) return null;
+  return { deleted: true };
+}
+
 async function incrementPrayerComments(id, delta) {
   return PrayerRequest.findByIdAndUpdate(id, { $inc: { commentsCount: delta } }, { new: true }).lean();
 }
@@ -28,5 +33,6 @@ module.exports = {
   createPrayer,
   findPrayerById,
   updatePrayer,
+  deletePrayer,
   incrementPrayerComments,
 };

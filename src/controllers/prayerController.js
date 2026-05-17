@@ -5,6 +5,7 @@ const {
   listComments,
   addComment,
   deleteComment,
+  deletePrayer,
   listPrayingUsers,
 } = require('../services/prayerService');
 
@@ -80,6 +81,20 @@ async function deletePrayerCommentController(req, res, next) {
   }
 }
 
+async function deletePrayerController(req, res, next) {
+  try {
+    console.log("delete prayer controller called with id", req.params.id, "and userId", req.session.userId);
+    const result = await deletePrayer({
+      prayerId: req.params.id,
+      userId: req.session.userId,
+    });
+    console.log("delete prayer result", result);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listPrayingUsersController(req, res, next) {
   try {
     const result = await listPrayingUsers({
@@ -101,4 +116,5 @@ module.exports = {
   addPrayerCommentController,
   deletePrayerCommentController,
   listPrayingUsersController,
+  deletePrayerController,
 };

@@ -5,6 +5,7 @@ const {
   findPrayerById,
   updatePrayer,
   incrementPrayerComments,
+  deletePrayer: deletePrayerById,
 } = require('../repositories/prayerRepository');
 const {
   listPrayerComments,
@@ -129,6 +130,21 @@ async function deleteComment({ prayerId, commentId, userId }) {
   return { deleted: true };
 }
 
+async function deletePrayer({ prayerId, userId }) {
+  const prayer = await findPrayerById(prayerId);
+  if (!prayer) throw new AppError('Prayer request not found', 404);
+
+  const user = await findById(userId);
+  const isAdmin = user?.role === 'admin';
+  if (!isAdmin && prayer.userId.toString() !== userId.toString()) {
+    throw new AppError('Forbidden', 403);
+  }
+
+  const deleted = await deletePrayerById(prayerId);
+  if (!deleted) throw new AppError('Prayer request not found', 404);
+  return deleted;
+}
+
 async function listPrayingUsers({ prayerId, limit = 20, offset = 0 }) {
   const prayer = await findPrayerById(prayerId);
   if (!prayer) throw new AppError('Prayer request not found', 404);
@@ -157,4 +173,5 @@ module.exports = {
   addComment,
   deleteComment,
   listPrayingUsers,
+  deletePrayer,
 };

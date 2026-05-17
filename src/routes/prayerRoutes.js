@@ -6,6 +6,7 @@ const {
   listPrayerCommentsController,
   addPrayerCommentController,
   deletePrayerCommentController,
+  deletePrayerController,
   listPrayingUsersController,
 } = require('../controllers/prayerController');
 const { validate } = require('../middlewares/validate');
@@ -26,5 +27,6 @@ router.get('/:id/prayers', requireAuth, validate(listPrayerPrayersSchema), listP
 router.get('/:id/comments', requireAuth, validate(listPrayerCommentsSchema), listPrayerCommentsController);
 router.post('/:id/comments', requireAuth, validate(createPrayerCommentSchema), addPrayerCommentController);
 router.delete('/:id/comments/:commentId', requireAuth, deletePrayerCommentController);
+router.delete('/:id', requireAuth, deletePrayerController)
 
 module.exports = router;

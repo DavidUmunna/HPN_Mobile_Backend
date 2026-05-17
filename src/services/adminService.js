@@ -25,7 +25,7 @@ function isNewMemberUser(user) {
   return createdAt.getTime() >= windowStart;
 }
 
-function buildNewMemberRecords(records, limit = 5) {
+function buildAllNewMemberRecords(records) {
   const seenUserIds = new Set();
 
   return records
@@ -36,8 +36,16 @@ function buildNewMemberRecords(records, limit = 5) {
       }
       seenUserIds.add(record.userId);
       return true;
-    })
-    .slice(0, limit);
+    });
+}
+
+function buildListPagination(list, pgn) {
+  return {
+    page: pgn.page,
+    limit: pgn.limit,
+    totalRecords: list.length,
+    totalPages: Math.max(Math.ceil(list.length / pgn.limit), 1),
+  };
 }
 
 function buildAttendanceAnalyticsLabel(record) {
@@ -101,6 +109,7 @@ async function listUsers({ page, limit } = {}) {
       email: u.email,
       firstName: u.firstName,
       lastName: u.lastName,
+      phone: u.phone,
       name: u.name,
       role: u.role,
       createdAt: u.createdAt,
@@ -114,25 +123,65 @@ async function listUsers({ page, limit } = {}) {
   };
 }
 
-async function attendanceSummary() {
-  const total = await Attendance.countDocuments();
-  const [latest, recentAttendance] = await Promise.all([
-    Attendance.find().populate('userId', 'firstName lastName name email role createdAt').sort({ timestamp: -1 }).limit(5).lean(),
-    Attendance.find().populate('userId', 'firstName lastName name email role createdAt').sort({ timestamp: -1 }).limit(50).lean(),
+async function attendanceSummary({
+  recentPage, recentLimit,
+  newMembersPage, newMembersLimit,
+  attendedPage, attendedLimit,
+  absentPage, absentLimit,
+} = {}) {
+  const recentPgn = buildPagination({ page: recentPage, limit: recentLimit || 5 });
+  const newMembersPgn = buildPagination({ page: newMembersPage, limit: newMembersLimit || 5 });
+  const attendedPgn = buildPagination({ page: attendedPage, limit: attendedLimit || 20 });
+  const absentPgn = buildPagination({ page: absentPage, limit: absentLimit || 20 });
+
+  const windowStart = new Date(Date.now() - NEW_MEMBER_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+
+  const [total, recentTotal, latestDocs, newMemberCandidates] = await Promise.all([
+    Attendance.countDocuments(),
+    Attendance.countDocuments(),
+    Attendance.find()
+      .populate('userId', 'firstName lastName name email role createdAt')
+      .sort({ timestamp: -1 })
+      .limit(1)
+      .lean(),
+    Attendance.find({ timestamp: { $gte: windowStart } })
+      .populate('userId', 'firstName lastName name email role createdAt')
+      .sort({ timestamp: -1 })
+      .lean(),
   ]);
+
+  const recentRecords = await Attendance.find()
+    .populate('userId', 'firstName lastName name email role createdAt')
+    .sort({ timestamp: -1 })
+    .skip(recentPgn.skip)
+    .limit(recentPgn.limit)
+    .lean();
+
+  const latestRecord = latestDocs[0] || null;
+
+  // Build full new-members list then slice to the requested page
+  const allNewMembers = buildAllNewMemberRecords(newMemberCandidates);
+  const newMembersData = allNewMembers.slice(newMembersPgn.skip, newMembersPgn.skip + newMembersPgn.limit);
 
   const eligibleUsers = await User.find({ role: { $in: ['member', 'staff'] } })
     .sort({ firstName: 1, lastName: 1, name: 1, email: 1 })
     .lean();
 
-  const latestRecord = latest[0] || null;
+  const defaultAbsentAll = eligibleUsers.map(toAttendanceAnalyticsUser);
+
   let analytics = {
     attendanceLabel: null,
     totalEligibleUsers: eligibleUsers.length,
     attendedCount: 0,
     absentCount: eligibleUsers.length,
-    attendedUsers: [],
-    absentUsers: eligibleUsers.map(toAttendanceAnalyticsUser),
+    attendedUsers: {
+      data: [],
+      pagination: buildListPagination([], attendedPgn),
+    },
+    absentUsers: {
+      data: defaultAbsentAll.slice(absentPgn.skip, absentPgn.skip + absentPgn.limit),
+      pagination: buildListPagination(defaultAbsentAll, absentPgn),
+    },
   };
 
   if (latestRecord?.attendanceDateKey) {
@@ -140,28 +189,48 @@ async function attendanceSummary() {
       .populate('userId', 'firstName lastName name email role')
       .lean();
 
-    const attendedUsers = recordsForLatestDay
+    const allAttended = recordsForLatestDay
       .map((record) => record.userId)
       .filter((user) => user && typeof user === 'object' && !Array.isArray(user))
-      .filter((user) => user.role === 'member' || user.role === 'staff');
+      .filter((user) => user.role === 'member' || user.role === 'staff')
+      .map(toAttendanceAnalyticsUser);
 
-    const attendedUserIds = new Set(attendedUsers.map((user) => user._id.toString()));
-    const absentUsers = eligibleUsers.filter((user) => !attendedUserIds.has(user._id.toString()));
+    const attendedUserIds = new Set(allAttended.map((u) => u.id));
+    const allAbsent = eligibleUsers
+      .filter((user) => !attendedUserIds.has(user._id.toString()))
+      .map(toAttendanceAnalyticsUser);
 
     analytics = {
       attendanceLabel: buildAttendanceAnalyticsLabel(latestRecord),
       totalEligibleUsers: eligibleUsers.length,
-      attendedCount: attendedUsers.length,
-      absentCount: absentUsers.length,
-      attendedUsers: attendedUsers.map(toAttendanceAnalyticsUser),
-      absentUsers: absentUsers.map(toAttendanceAnalyticsUser),
+      attendedCount: allAttended.length,
+      absentCount: allAbsent.length,
+      attendedUsers: {
+        data: allAttended.slice(attendedPgn.skip, attendedPgn.skip + attendedPgn.limit),
+        pagination: buildListPagination(allAttended, attendedPgn),
+      },
+      absentUsers: {
+        data: allAbsent.slice(absentPgn.skip, absentPgn.skip + absentPgn.limit),
+        pagination: buildListPagination(allAbsent, absentPgn),
+      },
     };
   }
 
   return {
     totalCheckIns: total,
-    recent: latest.map(toAttendanceRecord),
-    newMembers: buildNewMemberRecords(recentAttendance),
+    recent: {
+      data: recentRecords.map(toAttendanceRecord),
+      pagination: {
+        page: recentPgn.page,
+        limit: recentPgn.limit,
+        totalRecords: recentTotal,
+        totalPages: Math.max(Math.ceil(recentTotal / recentPgn.limit), 1),
+      },
+    },
+    newMembers: {
+      data: newMembersData,
+      pagination: buildListPagination(allNewMembers, newMembersPgn),
+    },
     analytics,
   };
 }
