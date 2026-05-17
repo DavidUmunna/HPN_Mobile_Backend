@@ -240,11 +240,31 @@ async function attendanceSummary({
   };
 }
 
-async function listAttendanceRecords({ page, limit } = {}) {
+async function listAttendanceRecords({ page, limit, date, from, to } = {}) {
   const pagination = buildPagination({ page, limit });
+
+  const filter = {};
+  if (date) {
+    // Range over the full UTC calendar day so every document matches regardless
+    // of whether it has attendanceDateKey (old docs may not have that field).
+    const start = new Date(`${String(date).trim()}T00:00:00.000Z`);
+    const end = new Date(`${String(date).trim()}T23:59:59.999Z`);
+    if (!Number.isNaN(start.getTime())) {
+      filter.timestamp = { $gte: start, $lte: end };
+    }
+  } else if (from || to) {
+    filter.timestamp = {};
+    if (from) filter.timestamp.$gte = new Date(from);
+    if (to) {
+      const toDate = new Date(to);
+      toDate.setUTCHours(23, 59, 59, 999);
+      filter.timestamp.$lte = toDate;
+    }
+  }
+
   const [totalRecords, records] = await Promise.all([
-    Attendance.countDocuments(),
-    Attendance.find()
+    Attendance.countDocuments(filter),
+    Attendance.find(filter)
       .populate('userId', 'firstName lastName name email role createdAt')
       .sort({ timestamp: -1 })
       .skip(pagination.skip)

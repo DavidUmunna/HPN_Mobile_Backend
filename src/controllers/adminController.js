@@ -48,6 +48,9 @@ async function listAttendanceRecordsController(req, res, next) {
     const result = await listAttendanceRecords({
       page: req.query.page,
       limit: req.query.limit,
+      date: req.query.date,
+      from: req.query.from,
+      to: req.query.to,
     });
     res.json(result);
   } catch (err) {
