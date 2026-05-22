@@ -15,7 +15,7 @@ const { listDependentsByUser, replaceDependentsByUser } = require('../repositori
 const { AppError } = require('../utils/errors');
 const { buildPagination } = require('../utils/pagination');
 
-const AUTO_CHECKOUT_HOUR = 14; // 2:00 PM on the day of check-in
+const AUTO_CHECKOUT_HOUR = 15; // 3:00 PM on the day of check-in
 
 function buildAttendanceDateKey(timestamp) {
   const year = timestamp.getFullYear();
