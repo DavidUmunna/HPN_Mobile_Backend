@@ -39,7 +39,7 @@ Add `checkOut(userId)`:
 
 Update `toAttendanceResponse` to include `checkedOutAt` in every response. If `record.checkedOutAt` is null, compute an automatic value:
 ```js
-const AUTO_CHECKOUT_MS = 3.5 * 60 * 60 * 1000; // 3h 30m
+const AUTO_CHECKOUT_MS = 14.5 * 60 * 60 * 1000; // 2:00 that day
 const autoCheckout = new Date(record.timestamp.getTime() + AUTO_CHECKOUT_MS);
 const checkedOutAt = record.checkedOutAt
   ? record.checkedOutAt

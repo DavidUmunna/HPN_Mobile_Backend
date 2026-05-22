@@ -15,7 +15,7 @@ const { listDependentsByUser, replaceDependentsByUser } = require('../repositori
 const { AppError } = require('../utils/errors');
 const { buildPagination } = require('../utils/pagination');
 
-const AUTO_CHECKOUT_MS = 3.5 * 60 * 60 * 1000; // 3 hours 30 minutes
+const AUTO_CHECKOUT_HOUR = 14; // 2:00 PM on the day of check-in
 
 function buildAttendanceDateKey(timestamp) {
   const year = timestamp.getFullYear();
@@ -35,7 +35,8 @@ function toAttendanceResponse(record, dependents) {
     : dependents;
 
   const checkInTime = record.timestamp instanceof Date ? record.timestamp : new Date(record.timestamp);
-  const autoCheckoutTime = new Date(checkInTime.getTime() + AUTO_CHECKOUT_MS);
+  const autoCheckoutTime = new Date(checkInTime);
+  autoCheckoutTime.setHours(AUTO_CHECKOUT_HOUR, 0, 0, 0);
   const now = new Date();
   const checkedOutAt = record.checkedOutAt
     ? record.checkedOutAt
