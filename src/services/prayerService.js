@@ -76,7 +76,7 @@ async function togglePray({ prayerId, userId }) {
   }
 
   const updated = await updatePrayer(prayerId, {
-    prayedBy: updatedList.map((id) => new mongoose.Types.ObjectId(id)),
+    prayedBy: updatedList
   });
 
   return { prayer: toPrayerResponse(updated, userId), status };
