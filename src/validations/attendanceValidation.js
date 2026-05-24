@@ -9,7 +9,7 @@ const checkInSchema = Joi.object({
       .items(
         Joi.object({
           name: Joi.string().trim().min(1).max(100).required(),
-          age: Joi.number().integer().min(0).max(120).required(),
+          age: Joi.number().min(0).max(120).required(),
         })
       )
       .max(10)

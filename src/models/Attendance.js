@@ -23,7 +23,7 @@ const attendanceSchema = new mongoose.Schema(
       {
         dependentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dependent' },
         name: { type: String, trim: true, required: true },
-        age: { type: Number, required: true, min: 0 },
+        age: { type: Number, required: true, min: 0, max: 120 },
       },
     ],
     location: {
