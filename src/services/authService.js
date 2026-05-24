@@ -167,7 +167,7 @@ async function updateProfile({ userId, updates }) {
 
 async function requestPasswordReset({ email, resetPageUrl }) {
   const user = await findByEmail(email);
-  if (!user) return;
+  if (!user) throw new AppError('No account found with that email address. Please register.', 404);
 
   if (!resetPageUrl) throw new AppError('Reset password UI URL not configured', 500);
 
