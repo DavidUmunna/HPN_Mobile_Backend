@@ -5,8 +5,16 @@ const { AppError } = require('../utils/errors');
 const XLSX = require('xlsx');
 const { buildPagination } = require('../utils/pagination');
 const { listAll, listPaginated, listPaginatedFiltered } = require('../repositories/userRepository');
+const { now } = require('mongoose');
 
 const NEW_MEMBER_WINDOW_DAYS = 14;
+
+function buildAttendanceDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 function normalizeDate(value) {
   if (!value) return null;
@@ -140,9 +148,10 @@ async function attendanceSummary({
   const absentPgn = buildPagination({ page: absentPage, limit: absentLimit || 20 });
 
   const windowStart = new Date(Date.now() - NEW_MEMBER_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const todayKey = buildAttendanceDateKey(new Date());
 
   const [total, recentTotal, latestDocs, newMemberCandidates] = await Promise.all([
-    Attendance.countDocuments(),
+    Attendance.countDocuments({ attendanceDateKey: todayKey }),
     Attendance.countDocuments(),
     Attendance.find()
       .populate('userId', 'firstName lastName name email role createdAt')
