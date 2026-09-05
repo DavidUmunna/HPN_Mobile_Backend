@@ -18,6 +18,8 @@ const createEventSchema = Joi.object({
     location: Joi.string().optional(),
     category: Joi.string().optional(),
     maxAttendees: Joi.number().min(1).optional(),
+    notifyBySms: Joi.boolean().optional(),
+    smsAudience: Joi.string().valid('all', 'member', 'staff', 'admin').optional(),
   }).required(),
   params: Joi.object().unknown(true),
   query: Joi.object().unknown(true),

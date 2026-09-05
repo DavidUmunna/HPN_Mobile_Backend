@@ -392,6 +392,17 @@ async function deleteUser(userId) {
   }
 }
 
+async function deleteEvent(eventId) {
+  try {
+    const event = await Event.findByIdAndDelete(eventId).lean();
+    if (!event) throw new AppError('Event not found', 404);
+    return { deleted: true, id: event._id.toString() };
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid event id', 400);
+    throw err;
+  }
+}
+
 module.exports = {
   listUsers,
   attendanceSummary,
@@ -402,4 +413,5 @@ module.exports = {
   eventsSummary,
   updateUserEmail,
   deleteUser,
+  deleteEvent,
 };

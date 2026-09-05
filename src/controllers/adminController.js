@@ -8,6 +8,7 @@ const {
   eventsSummary,
   updateUserEmail,
   deleteUser,
+  deleteEvent,
 } = require('../services/adminService');
 
 async function listUsersController(req, res, next) {
@@ -118,6 +119,15 @@ async function deleteUserController(req, res, next) {
   }
 }
 
+async function deleteEventController(req, res, next) {
+  try {
+    const result = await deleteEvent(req.params.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listUsersController,
   attendanceSummaryController,
@@ -128,4 +138,5 @@ module.exports = {
   eventsSummaryController,
   updateUserEmailController,
   deleteUserController,
+  deleteEventController,
 };
