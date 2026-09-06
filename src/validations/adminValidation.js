@@ -10,6 +10,16 @@ const changeUserEmailSchema = Joi.object({
   query: Joi.object().unknown(true),
 });
 
+const changeUserRoleSchema = Joi.object({
+  body: Joi.object({
+    role: Joi.string().valid('member', 'staff', 'admin').required(),
+  }).required(),
+  params: Joi.object({
+    id: Joi.string().required(),
+  }).required(),
+  query: Joi.object().unknown(true),
+});
+
 const supportDepartmentSchema = Joi.object({
   name: Joi.string().trim().min(2).max(100).required(),
   phone: Joi.string().trim().min(5).max(50).required(),
@@ -28,4 +38,4 @@ const updateSupportDirectorySchema = Joi.object({
   query: Joi.object().unknown(true),
 });
 
-module.exports = { changeUserEmailSchema, updateSupportDirectorySchema };
+module.exports = { changeUserEmailSchema, changeUserRoleSchema, updateSupportDirectorySchema };

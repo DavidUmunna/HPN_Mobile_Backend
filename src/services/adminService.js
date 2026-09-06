@@ -381,6 +381,25 @@ async function updateUserEmail({ userId, newEmail }) {
   }
 }
 
+async function updateUserRole({ userId, newRole, requesterId }) {
+  try {
+    if (userId === String(requesterId)) {
+      throw new AppError('You cannot change your own role', 400);
+    }
+
+    const user = await User.findById(userId);
+    if (!user) throw new AppError('User not found', 404);
+
+    user.role = newRole;
+    await user.save();
+
+    return { id: user._id.toString(), email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name, role: user.role };
+  } catch (err) {
+    if (err?.name === 'CastError') throw new AppError('Invalid user id', 400);
+    throw err;
+  }
+}
+
 async function deleteUser(userId) {
   try {
     const user = await User.findByIdAndDelete(userId);
@@ -412,6 +431,7 @@ module.exports = {
   exportAttendanceWorkbook,
   eventsSummary,
   updateUserEmail,
+  updateUserRole,
   deleteUser,
   deleteEvent,
 };

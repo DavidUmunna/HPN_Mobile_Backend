@@ -7,6 +7,7 @@ const {
   exportAttendanceWorkbook,
   eventsSummary,
   updateUserEmail,
+  updateUserRole,
   deleteUser,
   deleteEvent,
 } = require('../services/adminService');
@@ -109,6 +110,19 @@ async function updateUserEmailController(req, res, next) {
   }
 }
 
+async function updateUserRoleController(req, res, next) {
+  try {
+    const user = await updateUserRole({
+      userId: req.params.id,
+      newRole: req.body.role,
+      requesterId: req.user.id,
+    });
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function deleteUserController(req, res, next) {
   try {
     const result = await deleteUser(req.params.id);
@@ -137,6 +151,7 @@ module.exports = {
   exportAttendanceController,
   eventsSummaryController,
   updateUserEmailController,
+  updateUserRoleController,
   deleteUserController,
   deleteEventController,
 };
