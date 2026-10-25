@@ -11,13 +11,12 @@
     "bulk:users": "node scripts/bulk-register-users.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "connect-redis": "^9.0.0",
     "cors": "^2.8.5",
-    "crypto": "1.0.1",
     "dotenv": "^17.2.3",
     "expo-server-sdk": "^4.0.0",
     "express": "^5.2.1",
