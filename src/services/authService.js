@@ -196,7 +196,14 @@ async function requestPasswordReset({ email, resetPageUrl }) {
     <p>If you did not request this, you can ignore this email.</p>
   `;
 
-  await sendMail({ to: user.email, subject, text, html });
+  try {
+    await sendMail({ to: user.email, subject, text, html });
+  } catch (err) {
+    throw new AppError(
+      "We couldn't send your reset email right now. Please try again in a few minutes.",
+      err.statusCode || 502
+    );
+  }
 }
 
 async function resetPasswordWithToken({ token, password }) {

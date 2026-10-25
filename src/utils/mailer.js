@@ -36,13 +36,34 @@ async function sendMail({ to, subject, html, text }) {
     subject,
   });
 
-  return resend.emails.send({
-    from,
-    to: Array.isArray(to) ? to : [to],
-    subject,
-    html,
-    text,
-  });
+  let result;
+  try {
+    result = await resend.emails.send({
+      from,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text,
+    });
+  } catch (err) {
+    logger.error('Email send failed', { to, subject, error: err.message });
+    throw new AppError('Failed to send email', 502);
+  }
+
+  // Resend reports failures in the response instead of throwing
+  if (result.error) {
+    logger.error('Email rejected by Resend', {
+      to,
+      subject,
+      error: result.error.message,
+      name: result.error.name,
+    });
+    throw new AppError('Failed to send email', 502);
+  }
+
+  logger.info('Email sent', { to, subject, id: result.data?.id });
+
+  return result.data;
 }
 
 module.exports = { sendMail };
