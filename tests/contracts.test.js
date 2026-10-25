@@ -14,6 +14,7 @@ jest.mock('../src/services/pushNotificationService', () => ({
 }));
 
 const app = require('../src/app');
+const User = require('../src/models/User');
 
 let mongoServer;
 let emailCounter = 0;
@@ -22,11 +23,17 @@ const makeEmail = (prefix = 'user') => `${prefix}-${Date.now()}-${emailCounter++
 
 const authHeader = (token) => ({ Authorization: `Bearer ${token}` });
 
+// Signup always creates a member (security fix), so other roles are applied directly in the DB.
+// requireAdmin reads the role from the DB, so the signup token stays valid after promotion.
 const signupUser = async ({ email, password = 'password123', name = 'Test User', role } = {}) => {
   const res = await request(app)
     .post('/api/auth/signup')
-    .send({ email: email || makeEmail(), password, name, role })
+    .send({ email: email || makeEmail(), password, name })
     .expect(201);
+  if (role && role !== 'member') {
+    await User.updateOne({ email: res.body.user.email }, { role });
+    res.body.user.role = role;
+  }
   return res.body;
 };
 
@@ -101,6 +108,12 @@ const paginationSchema = Joi.object({
   totalRecords: Joi.number().integer().min(0).required(),
   totalPages: Joi.number().integer().min(1).required(),
 }).required();
+
+const pagedListSchema = (itemSchema) =>
+  Joi.object({
+    data: Joi.array().items(itemSchema).required(),
+    pagination: paginationSchema,
+  }).required();
 
 const attendanceAnalyticsUserSchema = Joi.object({
   id: objectId.required(),
@@ -224,7 +237,7 @@ describe('Contract: auth', () => {
   test('signup, login, me, logout', async () => {
     const signup = await signupUser({ email: makeEmail('auth') });
     assertSchema(authResponseSchema, signup);
-    expect(signup.user.mustChangePassword).toBe(true);
+    expect(signup.user.mustChangePassword).toBe(false);
 
     const loginRes = await request(app)
       .post('/api/auth/login')
@@ -327,12 +340,19 @@ describe('Contract: auth', () => {
   });
 
   test('forgot/reset contracts', async () => {
-    await signupUser({ email: makeEmail('reset') });
+    const { user } = await signupUser({ email: makeEmail('reset') });
     const forgotRes = await request(app)
       .post('/api/auth/forgot-password')
-      .send({ email: makeEmail('missing') })
+      .send({ email: user.email })
       .expect(200);
     assertSchema(Joi.object({ message: Joi.string().required() }).required(), forgotRes.body);
+
+    // Unknown emails get a 404 so the UI can prompt the user to register
+    const missingRes = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: makeEmail('missing') })
+      .expect(404);
+    assertSchema(Joi.object({ message: Joi.string().required() }).required(), missingRes.body);
 
     const redirectRes = await request(app).get('/api/auth/reset-password?token=token').expect(302);
     expect(redirectRes.headers.location).toBe('http://localhost:3000/reset-password?token=token');
@@ -370,7 +390,13 @@ describe('Contract: attendance', () => {
       .get('/api/attendance')
       .set(authHeader(token))
       .expect(200);
-    assertSchema(Joi.object({ records: Joi.array().items(attendanceSchema).required() }).required(), listRes.body);
+    assertSchema(
+      Joi.object({
+        records: Joi.array().items(attendanceSchema).required(),
+        pagination: paginationSchema,
+      }).required(),
+      listRes.body
+    );
 
     const recordId = checkInRes.body.record.id;
     const detailRes = await request(app)
@@ -642,7 +668,10 @@ describe('Contract: admin', () => {
       .set(authHeader(admin.token))
       .expect(200);
     assertSchema(
-      Joi.object({ users: Joi.array().items(adminListUserSchema).required() }).required(),
+      Joi.object({
+        users: Joi.array().items(adminListUserSchema).required(),
+        pagination: paginationSchema,
+      }).required(),
       usersRes.body
     );
 
@@ -653,15 +682,15 @@ describe('Contract: admin', () => {
     assertSchema(
       Joi.object({
         totalCheckIns: Joi.number().required(),
-        recent: Joi.array().items(attendanceSchema).required(),
-        newMembers: Joi.array().items(attendanceSchema).required(),
+        recent: pagedListSchema(attendanceSchema),
+        newMembers: pagedListSchema(attendanceSchema),
         analytics: Joi.object({
           attendanceLabel: Joi.alternatives().try(Joi.string(), Joi.valid(null)).required(),
           totalEligibleUsers: Joi.number().required(),
           attendedCount: Joi.number().required(),
           absentCount: Joi.number().required(),
-          attendedUsers: Joi.array().items(attendanceAnalyticsUserSchema).required(),
-          absentUsers: Joi.array().items(attendanceAnalyticsUserSchema).required(),
+          attendedUsers: pagedListSchema(attendanceAnalyticsUserSchema),
+          absentUsers: pagedListSchema(attendanceAnalyticsUserSchema),
         }).required(),
       }).required(),
       attendanceRes.body

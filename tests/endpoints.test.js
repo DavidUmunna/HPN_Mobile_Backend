@@ -13,16 +13,23 @@ jest.mock('../src/services/pushNotificationService', () => ({
 }));
 
 const app = require('../src/app');
+const User = require('../src/models/User');
 
 let mongoServer;
 
 const authHeader = (token) => ({ Authorization: `Bearer ${token}` });
 
+// Signup always creates a member (security fix), so other roles are applied directly in the DB.
+// requireAdmin reads the role from the DB, so the signup token stays valid after promotion.
 const signupUser = async ({ email, password = 'password123', name = 'Test User', role } = {}) => {
   const res = await request(app)
     .post('/api/auth/signup')
-    .send({ email, password, name, role })
+    .send({ email, password, name })
     .expect(201);
+  if (role && role !== 'member') {
+    await User.updateOne({ email: res.body.user.email }, { role });
+    res.body.user.role = role;
+  }
   return res.body;
 };
 
@@ -55,7 +62,7 @@ describe('Auth endpoints', () => {
   test('signup, login, me, logout', async () => {
     const signup = await signupUser({ email: 'user1@example.com' });
     expect(signup.user.email).toBe('user1@example.com');
-    expect(signup.user.mustChangePassword).toBe(true);
+    expect(signup.user.mustChangePassword).toBe(false);
 
     const loginRes = await request(app)
       .post('/api/auth/login')
@@ -69,7 +76,7 @@ describe('Auth endpoints', () => {
       .set(authHeader(loginRes.body.token))
       .expect(200);
     expect(meRes.body.user.email).toBe('user1@example.com');
-    expect(meRes.body.user.mustChangePassword).toBe(true);
+    expect(meRes.body.user.mustChangePassword).toBe(false);
 
     await request(app)
       .post('/api/auth/logout')
@@ -120,8 +127,8 @@ describe('Auth endpoints', () => {
       .expect(200);
     expect(summaryRes.body.analytics.attendedCount).toBe(1);
     expect(summaryRes.body.analytics.absentCount).toBe(0);
-    expect(summaryRes.body.analytics.attendedUsers[0].name).toBe('Attendance Member');
-    expect(summaryRes.body.newMembers.some((record) => record.id === attendanceId)).toBe(true);
+    expect(summaryRes.body.analytics.attendedUsers.data[0].name).toBe('Attendance Member');
+    expect(summaryRes.body.newMembers.data.some((record) => record.id === attendanceId)).toBe(true);
 
     const exportRes = await request(app)
       .get('/api/admin/attendance/export')
@@ -536,7 +543,7 @@ describe('Admin endpoints', () => {
       .set(authHeader(admin.token))
       .expect(200);
     expect(attendanceRes.body.totalCheckIns).toBeDefined();
-    expect(Array.isArray(attendanceRes.body.newMembers)).toBe(true);
+    expect(Array.isArray(attendanceRes.body.newMembers.data)).toBe(true);
 
     const eventsRes = await request(app)
       .get('/api/admin/events/summary')

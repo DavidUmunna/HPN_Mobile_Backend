@@ -33,14 +33,14 @@ describe('Auth routes', () => {
       .send({ email: 'test@example.com', password: 'password123', name: 'Tester' })
       .expect(201);
     expect(signupRes.body.user.email).toBe('test@example.com');
-    expect(signupRes.body.user.mustChangePassword).toBe(true);
+    expect(signupRes.body.user.mustChangePassword).toBe(false);
 
     const meRes = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${signupRes.body.token}`)
       .expect(200);
     expect(meRes.body.user.email).toBe('test@example.com');
-    expect(meRes.body.user.mustChangePassword).toBe(true);
+    expect(meRes.body.user.mustChangePassword).toBe(false);
   });
 
   test('change password clears forced change flag', async () => {
@@ -80,7 +80,7 @@ describe('Auth routes', () => {
       .send({ email: 'created-member@example.com', password: 'password123', name: 'Created Member' })
       .expect(201);
 
-    expect(createRes.body.user.mustChangePassword).toBe(true);
+    expect(createRes.body.user.mustChangePassword).toBe(false);
 
     const meRes = await adminAgent
       .get('/api/auth/me')
